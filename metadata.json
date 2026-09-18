@@ -1,0 +1,6 @@
+{
+  "name": "Jungle Math Safari",
+  "description": "A colorful, child-safe mathematics safari adventure teaching counting, addition, subtraction, and multiplication with animal companions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
