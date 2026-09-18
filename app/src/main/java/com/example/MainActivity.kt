@@ -32,6 +32,7 @@ import com.example.ui.screens.LevelResultDialog
 import com.example.ui.screens.LevelSelectScreen
 import com.example.ui.screens.OnboardingScreen
 import com.example.ui.screens.ParentDashboardScreen
+import com.example.ui.screens.ProgressTrackingScreen
 import com.example.ui.screens.SafariMapScreen
 import com.example.ui.screens.SplashScreen
 import com.example.ui.screens.StickersScreen
@@ -120,6 +121,8 @@ fun SafariApp(viewModel: SafariViewModel) {
                     onBadgesClick = { navController.navigate("badges") },
                     onStickersClick = { navController.navigate("stickers") },
                     stickersCount = uiState.stickers.count { it.isUnlocked },
+                    onProgressClick = { navController.navigate("progress") },
+                    totalProblemsSolved = uiState.stats.totalCorrect,
                     onParentZoneClick = {
                         viewModel.generateNewParentGate()
                         showParentGate = true
@@ -241,7 +244,23 @@ fun SafariApp(viewModel: SafariViewModel) {
                     currentAudioTheme = uiState.currentAudioTheme,
                     musicVolume = uiState.backgroundMusicVolume,
                     onSelectAudioTheme = { viewModel.selectJungleAudioTheme(it) },
-                    onSetMusicVolume = { viewModel.setBackgroundMusicVolume(it) }
+                    onSetMusicVolume = { viewModel.setBackgroundMusicVolume(it) },
+                    onNavigateToProgress = { navController.navigate("progress") }
+                )
+            }
+
+            composable("progress") {
+                ProgressTrackingScreen(
+                    profile = uiState.profile,
+                    stats = uiState.stats,
+                    stickers = uiState.stickers,
+                    onBackClick = { navController.popBackStack() },
+                    onPracticeTopic = { topic ->
+                        chosenTopicForLevelSelect = topic
+                        navController.navigate("level_select/${topic.id}")
+                    },
+                    onMusicToggle = { viewModel.toggleMusic() },
+                    isMusicOn = uiState.profile.musicEnabled
                 )
             }
         }

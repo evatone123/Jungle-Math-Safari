@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.sp
 import com.example.audio.JungleAudioTheme
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.UserStatsEntity
+import com.example.data.model.MathTopic
+import com.example.ui.components.CategoryComparativeBarChart
+import com.example.ui.components.CategoryProgressItem
 import com.example.ui.components.SafariTopBar
 import com.example.ui.theme.AdventureOrange
 import com.example.ui.theme.BananaYellow
@@ -72,6 +75,7 @@ fun ParentDashboardScreen(
     musicVolume: Float = 0.45f,
     onSelectAudioTheme: (JungleAudioTheme) -> Unit = {},
     onSetMusicVolume: (Float) -> Unit = {},
+    onNavigateToProgress: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var nicknameInput by remember { mutableStateOf(profile.nickname) }
@@ -152,7 +156,74 @@ fun ParentDashboardScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Subject Accuracy Bars
+                    val chartItems = remember(stats) {
+                        listOf(
+                            CategoryProgressItem(
+                                topic = MathTopic.COUNTING,
+                                title = "Counting",
+                                emoji = "🍌",
+                                animalEmoji = "🐒",
+                                animalName = "Kiki",
+                                solvedCount = stats.countingCorrect,
+                                totalCount = stats.countingTotal,
+                                color = Color(0xFFFFA000)
+                            ),
+                            CategoryProgressItem(
+                                topic = MathTopic.ADDITION,
+                                title = "Addition",
+                                emoji = "🍎",
+                                animalEmoji = "🦁",
+                                animalName = "Leo",
+                                solvedCount = stats.additionCorrect,
+                                totalCount = stats.additionTotal,
+                                color = Color(0xFFE65100)
+                            ),
+                            CategoryProgressItem(
+                                topic = MathTopic.SUBTRACTION,
+                                title = "Subtraction",
+                                emoji = "🥥",
+                                animalEmoji = "🐘",
+                                animalName = "Tembo",
+                                solvedCount = stats.subtractionCorrect,
+                                totalCount = stats.subtractionTotal,
+                                color = Color(0xFF1976D2)
+                            ),
+                            CategoryProgressItem(
+                                topic = MathTopic.MULTIPLICATION,
+                                title = "Multiplication",
+                                emoji = "🌿",
+                                animalEmoji = "🦒",
+                                animalName = "Twiga",
+                                solvedCount = stats.multiplicationCorrect,
+                                totalCount = stats.multiplicationTotal,
+                                color = Color(0xFF2E7D32)
+                            )
+                        )
+                    }
+
+                    // Visual Compose Graphics Chart
+                    CategoryComparativeBarChart(items = chartItems)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = onNavigateToProgress,
+                        colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("open_progress_analytics_button")
+                    ) {
+                        Text(
+                            text = "Open Full Visual Analytics & Donut Charts 📊 ➜",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Subject Accuracy Breakdown Bars
                     SkillAccuracyBar(label = "🍌 Counting (Grove)", correct = stats.countingCorrect, total = stats.countingTotal, color = Color(0xFFF9A825))
                     Spacer(modifier = Modifier.height(8.dp))
                     SkillAccuracyBar(label = "🦁 Addition (Valley)", correct = stats.additionCorrect, total = stats.additionTotal, color = Color(0xFFE65100))

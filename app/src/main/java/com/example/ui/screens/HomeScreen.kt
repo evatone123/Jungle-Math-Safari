@@ -44,6 +44,7 @@ import com.example.R
 import com.example.ui.components.SafariHeader
 import com.example.ui.theme.AdventureOrange
 import com.example.ui.theme.BananaYellow
+import com.example.ui.theme.EncouragementGreen
 import com.example.ui.theme.JunglePrimary
 import com.example.ui.theme.SafariGold
 import com.example.ui.theme.StarGold
@@ -64,6 +65,8 @@ fun HomeScreen(
     onBadgesClick: () -> Unit,
     onStickersClick: () -> Unit = {},
     stickersCount: Int = 0,
+    onProgressClick: () -> Unit = {},
+    totalProblemsSolved: Int = 0,
     onParentZoneClick: () -> Unit,
     onEditProfile: () -> Unit,
     modifier: Modifier = Modifier
@@ -373,6 +376,74 @@ fun HomeScreen(
                         }
                         Text(
                             text = "Collect digital stickers by solving math problems!",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+                Text(
+                    text = "➜",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JunglePrimary
+                )
+            }
+        }
+
+        // Visual Math Progress Tracker Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .clickable { onProgressClick() }
+                .testTag("math_progress_card"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(JunglePrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "📊", fontSize = 26.sp)
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Math Progress & Charts",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = EncouragementGreen.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "$totalProblemsSolved Solved",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = EncouragementGreen,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Visual graphs: Counting, Addition, Multiplication & more",
                             fontSize = 12.sp,
                             color = Color.Gray
                         )

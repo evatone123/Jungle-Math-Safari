@@ -90,5 +90,51 @@ class ExampleUnitTest {
         assertTrue(diamond.isNotEmpty())
         assertTrue(mythic.isNotEmpty())
     }
+
+    @Test
+    fun testCategoryProgressItemCalculations() {
+        val countingItem = com.example.ui.components.CategoryProgressItem(
+            topic = com.example.data.model.MathTopic.COUNTING,
+            title = "Counting",
+            emoji = "🍌",
+            animalEmoji = "🐒",
+            animalName = "Kiki",
+            solvedCount = 18,
+            totalCount = 20,
+            color = androidx.compose.ui.graphics.Color.Yellow
+        )
+
+        assertEquals(90, countingItem.accuracyPct)
+        assertEquals("🐾 Explorer", countingItem.masteryTier)
+
+        val masterItem = countingItem.copy(solvedCount = 55, totalCount = 60)
+        assertEquals("👑 Math Master", masterItem.masteryTier)
+
+        val unplayedItem = countingItem.copy(solvedCount = 0, totalCount = 0)
+        assertEquals(0, unplayedItem.accuracyPct)
+        assertEquals("🔒 Unexplored", unplayedItem.masteryTier)
+    }
+
+    @Test
+    fun testAnimalCompanionsForMathTopics() {
+        val lion = com.example.ui.components.AnimalCompanions.forTopic(com.example.data.model.MathTopic.ADDITION)
+        assertEquals("Leo the Lion", lion.name)
+        assertEquals("🦁", lion.animalEmoji)
+        assertTrue(lion.victoryQuotes.isNotEmpty())
+        assertTrue(lion.encouragementQuotes.isNotEmpty())
+
+        val monkey = com.example.ui.components.AnimalCompanions.forTopic(com.example.data.model.MathTopic.COUNTING)
+        assertEquals("Kiki the Monkey", monkey.name)
+        assertEquals("🐒", monkey.animalEmoji)
+        assertTrue(monkey.victoryQuotes.isNotEmpty())
+
+        val elephant = com.example.ui.components.AnimalCompanions.forTopic(com.example.data.model.MathTopic.SUBTRACTION)
+        assertEquals("Tembo the Elephant", elephant.name)
+        assertEquals("🐘", elephant.animalEmoji)
+
+        val giraffe = com.example.ui.components.AnimalCompanions.forTopic(com.example.data.model.MathTopic.MULTIPLICATION)
+        assertEquals("Twiga the Giraffe", giraffe.name)
+        assertEquals("🦒", giraffe.animalEmoji)
+    }
 }
 

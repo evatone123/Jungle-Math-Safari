@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.MathTopic
 import com.example.data.model.Question
 import com.example.data.model.QuestionType
+import com.example.ui.components.AnimalReactionState
+import com.example.ui.components.AnimatedAnimalCharacter
 import com.example.ui.viewmodel.GameSessionState
 import com.example.ui.theme.AdventureOrange
 import com.example.ui.theme.BananaYellow
@@ -186,7 +188,25 @@ fun GameScreen(
         )
 
         if (currentQ != null) {
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Reaction state for the animated companion character
+            val reactionState = when {
+                session.isAnswerChecked && session.isAnswerCorrect == true -> AnimalReactionState.CORRECT_CELEBRATION
+                session.isAnswerChecked && session.isAnswerCorrect == false -> AnimalReactionState.ENCOURAGING_RETRY
+                else -> AnimalReactionState.IDLE
+            }
+
+            // Animated Animal Character reacting with positive encouraging feedback
+            AnimatedAnimalCharacter(
+                reactionState = reactionState,
+                topic = topic,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Main Question Card
             Card(
@@ -313,7 +333,9 @@ fun GameScreen(
                 ) {
                     val isCorrect = session.isAnswerCorrect == true
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("answer_feedback_card"),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isCorrect) EncouragementGreen.copy(alpha = 0.15f) else GentleRetryOrange.copy(alpha = 0.15f)
@@ -326,19 +348,19 @@ fun GameScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isCorrect) "🎉" else "💡",
-                                fontSize = 28.sp
+                                text = if (isCorrect) topic.animalEmoji else "💡",
+                                fontSize = 32.sp
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = if (isCorrect) "Great thinking! +100" else "Almost! Correct was ${currentQ.correctAnswer}",
+                                    text = if (isCorrect) "Fantastic! +100 Points 🎉" else "Almost! Correct was ${currentQ.correctAnswer}",
                                     fontWeight = FontWeight.Black,
                                     fontSize = 16.sp,
                                     color = if (isCorrect) EncouragementGreen else GentleRetryOrange
                                 )
                                 Text(
-                                    text = if (isCorrect) "You're getting so good at math!" else "Keep practicing, explorer!",
+                                    text = if (isCorrect) "${topic.animalEmoji} says: Super math explorer!" else "Keep practicing, explorer!",
                                     fontSize = 13.sp,
                                     color = Color.DarkGray
                                 )
