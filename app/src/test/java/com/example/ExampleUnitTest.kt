@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.audio.BackgroundAudioManager
+import com.example.audio.JungleAudioTheme
 import com.example.data.model.StickerRarity
 import com.example.data.repository.SafariRepository
 import org.junit.Assert.assertEquals
@@ -11,6 +13,45 @@ class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
+    }
+
+    @Test
+    fun testJungleAudioThemesAndPresets() {
+        val themes = JungleAudioTheme.entries
+        assertEquals(3, themes.size)
+
+        // Verify all themes have unique valid properties
+        themes.forEach { theme ->
+            assertTrue(theme.id.isNotBlank())
+            assertTrue(theme.title.isNotBlank())
+            assertTrue(theme.emoji.isNotBlank())
+            assertTrue(theme.description.isNotBlank())
+            assertEquals(theme, JungleAudioTheme.fromId(theme.id))
+        }
+
+        // Test fallback
+        assertEquals(JungleAudioTheme.SERENE_RIVER, JungleAudioTheme.fromId("unknown_preset"))
+    }
+
+    @Test
+    fun testBackgroundAudioManagerVolumeAndThemeControl() {
+        val manager = BackgroundAudioManager()
+        assertEquals(JungleAudioTheme.SERENE_RIVER, manager.currentTheme)
+        assertEquals(0.45f, manager.masterVolume, 0.001f)
+        assertFalse(manager.isPlaying)
+
+        manager.setVolume(0.8f)
+        assertEquals(0.8f, manager.masterVolume, 0.001f)
+
+        // Verify clamping
+        manager.setVolume(1.5f)
+        assertEquals(1.0f, manager.masterVolume, 0.001f)
+
+        manager.setVolume(0.01f)
+        assertEquals(0.1f, manager.masterVolume, 0.001f)
+
+        manager.setTheme(JungleAudioTheme.CANOPY_BIRDS)
+        assertEquals(JungleAudioTheme.CANOPY_BIRDS, manager.currentTheme)
     }
 
     @Test

@@ -16,7 +16,7 @@ class SafariAudioEngine(private val context: Context) : TextToSpeech.OnInitListe
     private var toneGenerator: ToneGenerator? = null
     private var textToSpeech: TextToSpeech? = null
     private var isTtsReady = false
-    private val ambientPlayer = JungleAmbientPlayer()
+    val backgroundAudioManager = BackgroundAudioManager()
 
     var isSoundEnabled: Boolean = true
     var isVoiceEnabled: Boolean = true
@@ -39,10 +39,18 @@ class SafariAudioEngine(private val context: Context) : TextToSpeech.OnInitListe
     fun setMusicEnabled(enabled: Boolean) {
         isMusicEnabled = enabled
         if (enabled) {
-            ambientPlayer.start()
+            backgroundAudioManager.start()
         } else {
-            ambientPlayer.stop()
+            backgroundAudioManager.stop()
         }
+    }
+
+    fun setJungleAudioTheme(theme: JungleAudioTheme) {
+        backgroundAudioManager.setTheme(theme)
+    }
+
+    fun setMusicVolume(volume: Float) {
+        backgroundAudioManager.setVolume(volume)
     }
 
     override fun onInit(status: Int) {
@@ -118,7 +126,7 @@ class SafariAudioEngine(private val context: Context) : TextToSpeech.OnInitListe
     }
 
     fun release() {
-        ambientPlayer.stop()
+        backgroundAudioManager.stop()
         toneGenerator?.release()
         textToSpeech?.stop()
         textToSpeech?.shutdown()

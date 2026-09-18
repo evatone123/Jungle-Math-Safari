@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -46,6 +50,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.audio.JungleAudioTheme
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.UserStatsEntity
 import com.example.ui.components.SafariTopBar
@@ -63,6 +68,10 @@ fun ParentDashboardScreen(
     onUpdateSettings: (Boolean, Boolean, Boolean, Boolean) -> Unit,
     onResetProgress: () -> Unit,
     onBackClick: () -> Unit,
+    currentAudioTheme: JungleAudioTheme = JungleAudioTheme.SERENE_RIVER,
+    musicVolume: Float = 0.45f,
+    onSelectAudioTheme: (JungleAudioTheme) -> Unit = {},
+    onSetMusicVolume: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var nicknameInput by remember { mutableStateOf(profile.nickname) }
@@ -258,7 +267,7 @@ fun ParentDashboardScreen(
 
                     SettingToggleRow(
                         title = "Ambient Jungle Music",
-                        subtitle = "Soft jungle breeze, relaxing melody & flute chirps",
+                        subtitle = "Calming jungle nature sounds & light background music",
                         checked = musicOn,
                         onCheckedChange = {
                             musicOn = it
@@ -266,7 +275,99 @@ fun ParentDashboardScreen(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    if (musicOn) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Volume Slider
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Music & Nature Volume",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "${(musicVolume * 100).toInt()}%",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = JunglePrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Slider(
+                                value = musicVolume,
+                                onValueChange = { onSetMusicVolume(it) },
+                                valueRange = 0.1f..1.0f,
+                                steps = 9,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = JunglePrimary,
+                                    activeTrackColor = JunglePrimary
+                                ),
+                                modifier = Modifier.testTag("music_volume_slider")
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Soundscape Selector
+                        Text(
+                            text = "Jungle Soundscape Style",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            JungleAudioTheme.entries.forEach { theme ->
+                                val isSelected = currentAudioTheme == theme
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (isSelected) JunglePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    border = if (isSelected) BorderStroke(1.5.dp, JunglePrimary) else null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { onSelectAudioTheme(theme) }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(text = theme.emoji, fontSize = 24.sp)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = theme.title,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                color = if (isSelected) JunglePrimary else MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = theme.description,
+                                                fontSize = 11.sp,
+                                                color = Color.Gray,
+                                                lineHeight = 14.sp
+                                            )
+                                        }
+                                        if (isSelected) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(text = "✓", color = JunglePrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     SettingToggleRow(
                         title = "Voice Narration",

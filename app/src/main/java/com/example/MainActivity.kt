@@ -237,7 +237,11 @@ fun SafariApp(viewModel: SafariViewModel) {
                     onResetProgress = {
                         viewModel.resetProgress()
                     },
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    currentAudioTheme = uiState.currentAudioTheme,
+                    musicVolume = uiState.backgroundMusicVolume,
+                    onSelectAudioTheme = { viewModel.selectJungleAudioTheme(it) },
+                    onSetMusicVolume = { viewModel.setBackgroundMusicVolume(it) }
                 )
             }
         }

@@ -2,6 +2,7 @@ package com.example.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.audio.JungleAudioTheme
 import com.example.audio.SafariAudioEngine
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.DailyRecordEntity
@@ -62,7 +63,9 @@ data class SafariUiState(
     val gameSession: GameSessionState = GameSessionState(),
     val selectedDifficulty: DifficultyLevel = DifficultyLevel.MEDIUM,
     val parentGateQuestion: String = "12 + 7 = ?",
-    val parentGateAnswer: Int = 19
+    val parentGateAnswer: Int = 19,
+    val currentAudioTheme: JungleAudioTheme = JungleAudioTheme.SERENE_RIVER,
+    val backgroundMusicVolume: Float = 0.45f
 )
 
 class SafariViewModel(
@@ -75,6 +78,8 @@ class SafariViewModel(
     private val _parentGateQuestion = MutableStateFlow("12 + 7 = ?")
     private val _parentGateAnswer = MutableStateFlow(19)
     private val _newlyUnlockedSticker = MutableStateFlow<AnimalSticker?>(null)
+    private val _currentAudioTheme = MutableStateFlow(JungleAudioTheme.SERENE_RIVER)
+    private val _backgroundMusicVolume = MutableStateFlow(0.45f)
 
     val uiState: StateFlow<SafariUiState> = combine(
         repository.childProfile,
@@ -86,7 +91,9 @@ class SafariViewModel(
         repository.getTodayDailyRecord(),
         _gameSession,
         _selectedDifficulty,
-        _newlyUnlockedSticker
+        _newlyUnlockedSticker,
+        _currentAudioTheme,
+        _backgroundMusicVolume
     ) { args: Array<Any?> ->
         val profile = args[0] as ChildProfileEntity
         val stats = args[1] as UserStatsEntity
@@ -102,6 +109,8 @@ class SafariViewModel(
         val session = args[7] as GameSessionState
         val difficulty = args[8] as DifficultyLevel
         val newlyUnlocked = args[9] as? AnimalSticker
+        val audioTheme = args[10] as JungleAudioTheme
+        val musicVolume = args[11] as Float
 
         SafariUiState(
             profile = profile,
@@ -115,7 +124,9 @@ class SafariViewModel(
             gameSession = session,
             selectedDifficulty = difficulty,
             parentGateQuestion = _parentGateQuestion.value,
-            parentGateAnswer = _parentGateAnswer.value
+            parentGateAnswer = _parentGateAnswer.value,
+            currentAudioTheme = audioTheme,
+            backgroundMusicVolume = musicVolume
         )
     }.stateIn(
         scope = viewModelScope,
@@ -384,6 +395,16 @@ class SafariViewModel(
                 cloudSync = currentProfile.isCloudSyncEnabled
             )
         }
+    }
+
+    fun selectJungleAudioTheme(theme: JungleAudioTheme) {
+        _currentAudioTheme.value = theme
+        audioEngine.setJungleAudioTheme(theme)
+    }
+
+    fun setBackgroundMusicVolume(volume: Float) {
+        _backgroundMusicVolume.value = volume
+        audioEngine.setMusicVolume(volume)
     }
 
     fun selectAnimalCompanion(animalId: String) {
