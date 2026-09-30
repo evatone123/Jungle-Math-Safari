@@ -39,12 +39,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.LevelProgressEntity
+import com.example.data.model.DifficultyLevel
+import com.example.data.model.LessonEncouragementState
 import com.example.data.model.MathTopic
+import com.example.ui.components.InteractiveSafariMap
+import com.example.ui.components.SafariMapEncouragementOverlay
 import com.example.ui.components.SafariTopBar
 import com.example.ui.theme.BananaYellow
 import com.example.ui.theme.JunglePrimary
 import com.example.ui.theme.SafariGold
 import com.example.ui.theme.StarGold
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 data class FutureWorld(
     val title: String,
@@ -59,48 +69,165 @@ val FUTURE_WORLDS = listOf(
     FutureWorld("Safari Market", "Coins & Money", "🦓")
 )
 
+enum class SafariMapViewMode {
+    VISUAL_TRAIL_MAP,
+    EXPEDITION_CARDS
+}
+
 @Composable
 fun SafariMapScreen(
     levels: List<LevelProgressEntity>,
     onSelectTopic: (MathTopic) -> Unit,
+    onStartLesson: (MathTopic, Int, DifficultyLevel) -> Unit = { _, _, _ -> },
     onBackClick: () -> Unit,
+    onNavigateToEncyclopedia: (MathTopic?) -> Unit = {},
+    companionAvatar: String = "🦁",
     isMusicOn: Boolean = true,
     onMusicToggle: () -> Unit = {},
+    activeEncouragement: LessonEncouragementState? = null,
+    onDismissEncouragement: () -> Unit = {},
+    onSpeakEncouragement: (String) -> Unit = {},
+    onGiveHighFive: () -> Unit = {},
+    onTriggerEncouragementPreview: (MathTopic, Int) -> Unit = { _, _ -> },
+    onViewStickers: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    var viewMode by remember { mutableStateOf(SafariMapViewMode.VISUAL_TRAIL_MAP) }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        SafariTopBar(
-            title = "Safari Map 🗺️",
-            subtitle = "Choose an adventure world",
-            onBackClick = onBackClick,
-            onMusicToggle = onMusicToggle,
-            isMusicOn = isMusicOn
-        )
+        Column(modifier = Modifier.fillMaxSize()) {
+            SafariTopBar(
+                title = "Safari Map 🗺️",
+                subtitle = "Explore math zones & conquer milestones",
+                onBackClick = onBackClick,
+                onMusicToggle = onMusicToggle,
+                isMusicOn = isMusicOn
+            )
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // 4 Playable Worlds
-            items(MathTopic.entries) { topic ->
-                val topicLevels = levels.filter { it.areaTopic == topic.id }
-                val totalStarsInTopic = topicLevels.sumOf { it.starsEarned }
-                val completedLevels = topicLevels.count { it.starsEarned > 0 }
-
-                WorldAdventureCard(
-                    topic = topic,
-                    starsCount = totalStarsInTopic,
-                    completedLevels = completedLevels,
-                    totalLevels = 10,
-                    onClick = { onSelectTopic(topic) }
+            // View Mode Switcher: Visual Trail Map vs Cards vs Companion Cheers
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = viewMode == SafariMapViewMode.VISUAL_TRAIL_MAP,
+                    onClick = { viewMode = SafariMapViewMode.VISUAL_TRAIL_MAP },
+                    label = { Text("🗺️ Visual Trail Map") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = JunglePrimary,
+                        selectedLabelColor = Color.White
+                    ),
+                    modifier = Modifier.testTag("tab_visual_trail_map")
+                )
+                FilterChip(
+                    selected = viewMode == SafariMapViewMode.EXPEDITION_CARDS,
+                    onClick = { viewMode = SafariMapViewMode.EXPEDITION_CARDS },
+                    label = { Text("📜 Cards") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = JunglePrimary,
+                        selectedLabelColor = Color.White
+                    ),
+                    modifier = Modifier.testTag("tab_expedition_cards")
+                )
+                FilterChip(
+                    selected = activeEncouragement != null,
+                    onClick = {
+                        val completed = levels.filter { it.starsEarned > 0 }.maxByOrNull { it.levelNumber }
+                        val topic = if (completed != null) MathTopic.fromId(completed.areaTopic) else MathTopic.COUNTING
+                        val lvl = completed?.levelNumber ?: 1
+                        onTriggerEncouragementPreview(topic, lvl)
+                    },
+                    label = { Text("🎉 Buddy Cheers") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = SafariGold,
+                        selectedLabelColor = Color.White
+                    ),
+                    modifier = Modifier.testTag("tab_companion_cheers")
                 )
             }
+
+            if (viewMode == SafariMapViewMode.VISUAL_TRAIL_MAP) {
+                // Interactive Visual Safari Map with winding jungle trail, milestones, and zone waypoints
+                InteractiveSafariMap(
+                    levels = levels,
+                    onSelectTopic = onSelectTopic,
+                    onStartLesson = onStartLesson,
+                    onNavigateToEncyclopedia = onNavigateToEncyclopedia,
+                    companionAvatar = companionAvatar,
+                    onTriggerEncouragement = onTriggerEncouragementPreview,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Quick link to Jungle Encyclopedia
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .clickable { onNavigateToEncyclopedia(null) }
+                            .testTag("card_open_encyclopedia"),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = JunglePrimary)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "📖", fontSize = 28.sp)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Jungle Encyclopedia",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 16.sp,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "16 animals to discover across math zones!",
+                                        fontSize = 12.sp,
+                                        color = BananaYellow
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Open",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                // 4 Playable Worlds
+                items(MathTopic.entries) { topic ->
+                    val topicLevels = levels.filter { it.areaTopic == topic.id }
+                    val totalStarsInTopic = topicLevels.sumOf { it.starsEarned }
+                    val completedLevels = topicLevels.count { it.starsEarned > 0 }
+
+                    WorldAdventureCard(
+                        topic = topic,
+                        starsCount = totalStarsInTopic,
+                        completedLevels = completedLevels,
+                        totalLevels = 10,
+                        onClick = { onSelectTopic(topic) }
+                    )
+                }
 
             // Section Header: Future Expeditions
             item {
@@ -186,6 +313,21 @@ fun SafariMapScreen(
             }
         }
     }
+    }
+
+    // Screen State: Animated Animal Companions Offering Encouragement After Completing a Lesson
+    activeEncouragement?.let { encouragementState ->
+        SafariMapEncouragementOverlay(
+            state = encouragementState,
+            onDismiss = onDismissEncouragement,
+            onSpeakEncouragement = onSpeakEncouragement,
+            onGiveHighFive = onGiveHighFive,
+            onStartNextLesson = onStartLesson,
+            onRetryLesson = onStartLesson,
+            onViewStickers = onViewStickers
+        )
+    }
+}
 }
 
 @Composable

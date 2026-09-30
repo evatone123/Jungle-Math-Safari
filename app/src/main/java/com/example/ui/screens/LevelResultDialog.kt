@@ -209,10 +209,27 @@ fun LevelResultDialog(
         },
         confirmButton = {
             Column(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onReturnMap,
+                    colors = ButtonDefaults.buttonColors(containerColor = SafariGold),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                        .testTag("result_companion_cheers_button")
+                ) {
+                    Text(
+                        text = "🐾 Buddy Cheers on Map! 🎉",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+
                 if (summary.newlyUnlockedStickers.isNotEmpty() && onViewStickers != null) {
                     Button(
                         onClick = onViewStickers,
-                        colors = ButtonDefaults.buttonColors(containerColor = SafariGold),
+                        colors = ButtonDefaults.buttonColors(containerColor = AdventureOrange),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()

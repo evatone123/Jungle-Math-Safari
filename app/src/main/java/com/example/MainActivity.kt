@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.data.model.JungleEncyclopediaData
 import com.example.data.model.MathTopic
 import com.example.ui.components.ParentGateDialog
 import com.example.ui.components.TutorBottomSheet
@@ -28,6 +29,7 @@ import com.example.ui.screens.BadgesScreen
 import com.example.ui.screens.DailyChallengeScreen
 import com.example.ui.screens.GameScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.JungleEncyclopediaScreen
 import com.example.ui.screens.LevelResultDialog
 import com.example.ui.screens.LevelSelectScreen
 import com.example.ui.screens.OnboardingScreen
@@ -121,6 +123,8 @@ fun SafariApp(viewModel: SafariViewModel) {
                     onBadgesClick = { navController.navigate("badges") },
                     onStickersClick = { navController.navigate("stickers") },
                     stickersCount = uiState.stickers.count { it.isUnlocked },
+                    onEncyclopediaClick = { navController.navigate("encyclopedia") },
+                    unlockedAnimalsCount = JungleEncyclopediaData.getPopulatedEncyclopedia(uiState.levels, uiState.stats.totalStars).count { it.isUnlocked },
                     onProgressClick = { navController.navigate("progress") },
                     totalProblemsSolved = uiState.stats.totalCorrect,
                     onParentZoneClick = {
@@ -138,9 +142,30 @@ fun SafariApp(viewModel: SafariViewModel) {
                         chosenTopicForLevelSelect = topic
                         navController.navigate("level_select/${topic.id}")
                     },
+                    onStartLesson = { topic, levelNum, difficulty ->
+                        chosenTopicForLevelSelect = topic
+                        viewModel.startLevel(topic, levelNum, difficulty)
+                        navController.navigate("game")
+                    },
                     onBackClick = { navController.popBackStack() },
+                    onNavigateToEncyclopedia = { topic ->
+                        if (topic != null) {
+                            navController.navigate("encyclopedia/${topic.id}")
+                        } else {
+                            navController.navigate("encyclopedia")
+                        }
+                    },
+                    companionAvatar = uiState.profile.avatarEmoji,
                     isMusicOn = uiState.profile.musicEnabled,
-                    onMusicToggle = { viewModel.toggleMusic() }
+                    onMusicToggle = { viewModel.toggleMusic() },
+                    activeEncouragement = uiState.lessonEncouragement,
+                    onDismissEncouragement = { viewModel.dismissLessonEncouragement() },
+                    onSpeakEncouragement = { viewModel.speakCompanionCheer(it) },
+                    onGiveHighFive = { viewModel.playHighFiveSound() },
+                    onTriggerEncouragementPreview = { topic, levelNum ->
+                        viewModel.triggerLessonEncouragement(topic, levelNum)
+                    },
+                    onViewStickers = { navController.navigate("stickers") }
                 )
             }
 
@@ -227,6 +252,41 @@ fun SafariApp(viewModel: SafariViewModel) {
                 )
             }
 
+            composable("encyclopedia") {
+                JungleEncyclopediaScreen(
+                    levels = uiState.levels,
+                    initialZoneFilter = null,
+                    onSpeakAnimalFact = { viewModel.speakAnimalEncyclopediaFact(it) },
+                    onNavigateToZone = { topic ->
+                        chosenTopicForLevelSelect = topic
+                        navController.navigate("level_select/${topic.id}")
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    isMusicOn = uiState.profile.musicEnabled,
+                    onMusicToggle = { viewModel.toggleMusic() }
+                )
+            }
+
+            composable(
+                route = "encyclopedia/{topicId}",
+                arguments = listOf(navArgument("topicId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val topicId = backStackEntry.arguments?.getString("topicId")
+                val topic = if (topicId != null) MathTopic.fromId(topicId) else null
+                JungleEncyclopediaScreen(
+                    levels = uiState.levels,
+                    initialZoneFilter = topic,
+                    onSpeakAnimalFact = { viewModel.speakAnimalEncyclopediaFact(it) },
+                    onNavigateToZone = { targetTopic ->
+                        chosenTopicForLevelSelect = targetTopic
+                        navController.navigate("level_select/${targetTopic.id}")
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    isMusicOn = uiState.profile.musicEnabled,
+                    onMusicToggle = { viewModel.toggleMusic() }
+                )
+            }
+
             composable("parent_zone") {
                 ParentDashboardScreen(
                     profile = uiState.profile,
@@ -298,7 +358,10 @@ fun SafariApp(viewModel: SafariViewModel) {
                     if (nextLevel <= 10 && !uiState.gameSession.isDailyChallenge) {
                         viewModel.startLevel(summary.topic, nextLevel, summary.difficulty)
                     } else {
-                        navController.popBackStack("map", inclusive = false)
+                        val popped = navController.popBackStack("map", inclusive = false)
+                        if (!popped) {
+                            navController.navigate("map")
+                        }
                     }
                 },
                 onRetryLevel = {
@@ -309,7 +372,10 @@ fun SafariApp(viewModel: SafariViewModel) {
                     }
                 },
                 onReturnMap = {
-                    navController.popBackStack("map", inclusive = false)
+                    val popped = navController.popBackStack("map", inclusive = false)
+                    if (!popped) {
+                        navController.navigate("map")
+                    }
                 },
                 onViewStickers = {
                     navController.navigate("stickers")

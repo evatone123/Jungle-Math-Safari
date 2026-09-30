@@ -12,6 +12,9 @@ import com.example.data.model.AnimalCompanion
 import com.example.data.model.AnimalSticker
 import com.example.data.model.DifficultyLevel
 import com.example.data.model.GameLevelSummary
+import com.example.data.model.JungleAnimalEntry
+import com.example.data.model.LessonEncouragementFactory
+import com.example.data.model.LessonEncouragementState
 import com.example.data.model.MathTopic
 import com.example.data.model.Question
 import com.example.data.model.SafariBadge
@@ -58,6 +61,7 @@ data class SafariUiState(
     val badges: List<SafariBadge> = emptyList(),
     val stickers: List<AnimalSticker> = emptyList(),
     val newlyUnlockedSticker: AnimalSticker? = null,
+    val lessonEncouragement: LessonEncouragementState? = null,
     val levels: List<LevelProgressEntity> = emptyList(),
     val todayRecord: DailyRecordEntity? = null,
     val gameSession: GameSessionState = GameSessionState(),
@@ -78,6 +82,7 @@ class SafariViewModel(
     private val _parentGateQuestion = MutableStateFlow("12 + 7 = ?")
     private val _parentGateAnswer = MutableStateFlow(19)
     private val _newlyUnlockedSticker = MutableStateFlow<AnimalSticker?>(null)
+    private val _lessonEncouragementState = MutableStateFlow<LessonEncouragementState?>(null)
     private val _currentAudioTheme = MutableStateFlow(JungleAudioTheme.SERENE_RIVER)
     private val _backgroundMusicVolume = MutableStateFlow(0.45f)
 
@@ -93,7 +98,8 @@ class SafariViewModel(
         _selectedDifficulty,
         _newlyUnlockedSticker,
         _currentAudioTheme,
-        _backgroundMusicVolume
+        _backgroundMusicVolume,
+        _lessonEncouragementState
     ) { args: Array<Any?> ->
         val profile = args[0] as ChildProfileEntity
         val stats = args[1] as UserStatsEntity
@@ -111,6 +117,7 @@ class SafariViewModel(
         val newlyUnlocked = args[9] as? AnimalSticker
         val audioTheme = args[10] as JungleAudioTheme
         val musicVolume = args[11] as Float
+        val encouragement = args[12] as? LessonEncouragementState
 
         SafariUiState(
             profile = profile,
@@ -119,6 +126,7 @@ class SafariViewModel(
             badges = badges,
             stickers = stickers,
             newlyUnlockedSticker = newlyUnlocked,
+            lessonEncouragement = encouragement,
             levels = levels,
             todayRecord = todayRecord,
             gameSession = session,
@@ -304,6 +312,18 @@ class SafariViewModel(
                     audioEngine.playCelebration()
                     audioEngine.speak("Hooray! You unlocked the ${dailyResult.newlyUnlockedStickers.first().name} sticker!")
                 }
+                val encouragement = LessonEncouragementFactory.create(
+                    topic = MathTopic.COUNTING,
+                    levelNumber = 1,
+                    starsEarned = stars,
+                    score = session.score,
+                    coinsEarned = dailyResult.bonusCoins,
+                    isPerfect = (correct == total),
+                    isDailyChallenge = true,
+                    unlockedSticker = dailyResult.newlyUnlockedStickers.firstOrNull(),
+                    selectedCompanionId = uiState.value.profile.selectedCompanionId
+                )
+                _lessonEncouragementState.value = encouragement
                 _gameSession.update { it.copy(isSessionComplete = true, summary = summary) }
             } else {
                 val summary = repository.recordLevelCompletion(
@@ -320,6 +340,18 @@ class SafariViewModel(
                     audioEngine.playCelebration()
                     audioEngine.speak("Hooray! You unlocked the ${summary.newlyUnlockedStickers.first().name} sticker!")
                 }
+                val encouragement = LessonEncouragementFactory.create(
+                    topic = session.topic,
+                    levelNumber = session.levelNumber,
+                    starsEarned = stars,
+                    score = session.score,
+                    coinsEarned = summary.coinsEarned,
+                    isPerfect = (correct == total),
+                    isDailyChallenge = false,
+                    unlockedSticker = summary.newlyUnlockedStickers.firstOrNull(),
+                    selectedCompanionId = uiState.value.profile.selectedCompanionId
+                )
+                _lessonEncouragementState.value = encouragement
                 _gameSession.update { it.copy(isSessionComplete = true, summary = summary) }
             }
         }
@@ -419,6 +451,34 @@ class SafariViewModel(
         }
     }
 
+    fun dismissLessonEncouragement() {
+        _lessonEncouragementState.value = null
+    }
+
+    fun triggerLessonEncouragement(topic: MathTopic = MathTopic.COUNTING, levelNumber: Int = 1) {
+        val encouragement = LessonEncouragementFactory.create(
+            topic = topic,
+            levelNumber = levelNumber,
+            starsEarned = 3,
+            score = 300,
+            coinsEarned = 30,
+            isPerfect = true,
+            isDailyChallenge = false,
+            selectedCompanionId = uiState.value.profile.selectedCompanionId
+        )
+        _lessonEncouragementState.value = encouragement
+        audioEngine.playCelebration()
+        audioEngine.speak(encouragement.companions.firstOrNull()?.voiceSpeech ?: "Awesome job explorer!")
+    }
+
+    fun speakCompanionCheer(speech: String) {
+        audioEngine.speak(speech)
+    }
+
+    fun playHighFiveSound() {
+        audioEngine.playCelebration()
+    }
+
     fun dismissStickerCelebration() {
         _newlyUnlockedSticker.value = null
     }
@@ -426,6 +486,11 @@ class SafariViewModel(
     fun speakStickerFact(sticker: AnimalSticker) {
         audioEngine.playTap()
         audioEngine.speak("${sticker.name}! Fun fact: ${sticker.funFact}")
+    }
+
+    fun speakAnimalEncyclopediaFact(animal: JungleAnimalEntry) {
+        audioEngine.playTap()
+        audioEngine.speak("${animal.commonName}! ${animal.soundSpeechPhrase}")
     }
 
     override fun onCleared() {
