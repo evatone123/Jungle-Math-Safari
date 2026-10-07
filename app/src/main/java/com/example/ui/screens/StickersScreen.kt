@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -100,7 +101,8 @@ fun StickersScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SafariTopBar(
             title = "Animal Stickers 🐾",
@@ -110,44 +112,51 @@ fun StickersScreen(
             isMusicOn = isMusicOn
         )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .widthIn(max = 1000.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Album Progress Header Banner
-            item(span = { GridItemSpan(2) }) {
-                StickerAlbumBanner(
-                    unlockedCount = unlockedCount,
-                    totalCount = stickers.size,
-                    totalProblemsSolved = totalProblemsSolved,
-                    nextSticker = nextStickerToUnlock
-                )
-            }
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 150.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                // Album Progress Header Banner
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    StickerAlbumBanner(
+                        unlockedCount = unlockedCount,
+                        totalCount = stickers.size,
+                        totalProblemsSolved = totalProblemsSolved,
+                        nextSticker = nextStickerToUnlock
+                    )
+                }
 
-            // Filter Chips
-            item(span = { GridItemSpan(2) }) {
-                StickerFilterRow(
-                    selectedFilter = selectedFilter,
-                    onSelectFilter = { selectedFilter = it }
-                )
-            }
+                // Filter Chips
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    StickerFilterRow(
+                        selectedFilter = selectedFilter,
+                        onSelectFilter = { selectedFilter = it }
+                    )
+                }
 
-            // Sticker Cards
-            items(filteredStickers, key = { it.id }) { sticker ->
-                StickerCard(
-                    sticker = sticker,
-                    onClick = {
-                        inspectedSticker = sticker
-                        if (sticker.isUnlocked) {
-                            onSpeakStickerFact(sticker)
+                // Sticker Cards
+                items(filteredStickers, key = { it.id }) { sticker ->
+                    StickerCard(
+                        sticker = sticker,
+                        onClick = {
+                            inspectedSticker = sticker
+                            if (sticker.isUnlocked) {
+                                onSpeakStickerFact(sticker)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }

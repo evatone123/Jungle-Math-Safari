@@ -393,7 +393,7 @@ fun SafariMapEncouragementOverlay(
 
                 // Companion Squad Carousel Tabs (Tap any animal companion to hear them cheer!)
                 Text(
-                    text = "SAFARI BUDDY CHEERS 🐾 (Tap a friend!)",
+                    text = "BC 🐾 (Tap a friend!)",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Black,
                     color = JunglePrimary,

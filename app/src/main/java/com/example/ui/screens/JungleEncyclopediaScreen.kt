@@ -18,8 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -110,7 +113,8 @@ fun JungleEncyclopediaScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SafariTopBar(
             title = "Jungle Encyclopedia 📖",
@@ -120,141 +124,150 @@ fun JungleEncyclopediaScreen(
             isMusicOn = isMusicOn
         )
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .widthIn(max = 1000.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Milestone Discovery Progress Bar Banner
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("encyclopedia_progress_card"),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = JunglePrimary),
-                    elevation = CardDefaults.cardElevation(3.dp)
-                ) {
-                    Column(
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 320.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Milestone Discovery Progress Bar Banner
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp)
+                            .testTag("encyclopedia_progress_card"),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = JunglePrimary),
+                        elevation = CardDefaults.cardElevation(3.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "WILDLIFE DISCOVERY",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BananaYellow,
-                                    letterSpacing = 1.sp
-                                )
-                                Text(
-                                    text = "$totalUnlocked of $totalAnimals Animals Found!",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.Black.copy(alpha = 0.25f)
-                            ) {
-                                Text(
-                                    text = "${((totalUnlocked.toFloat() / totalAnimals) * 100).toInt()}% Explored",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = BananaYellow,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        LinearProgressIndicator(
-                            progress = { (totalUnlocked.toFloat() / totalAnimals).coerceIn(0f, 1f) },
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(5.dp)),
-                            color = SafariGold,
-                            trackColor = Color.White.copy(alpha = 0.25f),
-                            strokeCap = StrokeCap.Round
-                        )
+                                .padding(18.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "WILDLIFE DISCOVERY",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BananaYellow,
+                                        letterSpacing = 1.sp
+                                    )
+                                    Text(
+                                        text = "$totalUnlocked of $totalAnimals Animals Found!",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color.Black.copy(alpha = 0.25f)
+                                ) {
+                                    Text(
+                                        text = "${((totalUnlocked.toFloat() / totalAnimals) * 100).toInt()}% Explored",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = BananaYellow,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(
-                            text = "Solve math problems and earn stars in each zone to uncover new jungle wildlife!",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                            LinearProgressIndicator(
+                                progress = { (totalUnlocked.toFloat() / totalAnimals).coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(5.dp)),
+                                color = SafariGold,
+                                trackColor = Color.White.copy(alpha = 0.25f),
+                                strokeCap = StrokeCap.Round
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Solve math problems and earn stars in each zone to uncover new jungle wildlife!",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
                     }
                 }
-            }
 
-            // Zone Category Filter Chips
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = selectedZoneFilter == null,
-                        onClick = { selectedZoneFilter = null },
-                        label = { Text("All Zones ($totalAnimals)") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = JunglePrimary,
-                            selectedLabelColor = Color.White
-                        )
-                    )
-
-                    MathTopic.entries.forEach { topic ->
-                        val zoneName = when (topic) {
-                            MathTopic.COUNTING -> "Counting Creek"
-                            MathTopic.ADDITION -> "Addition Woods"
-                            MathTopic.SUBTRACTION -> "Subtraction Savannah"
-                            MathTopic.MULTIPLICATION -> "Multiplication Canopy"
-                        }
-                        val countInZone = animals.count { it.zone == topic && it.isUnlocked }
-
+                // Zone Category Filter Chips
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         FilterChip(
-                            selected = selectedZoneFilter == topic,
-                            onClick = { selectedZoneFilter = topic },
-                            label = { Text("${topic.animalEmoji} $zoneName ($countInZone/4)") },
+                            selected = selectedZoneFilter == null,
+                            onClick = { selectedZoneFilter = null },
+                            label = { Text("All Zones ($totalAnimals)") },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(topic.colorHex),
+                                selectedContainerColor = JunglePrimary,
                                 selectedLabelColor = Color.White
                             )
                         )
+
+                        MathTopic.entries.forEach { topic ->
+                            val zoneName = when (topic) {
+                                MathTopic.COUNTING -> "Counting Creek"
+                                MathTopic.ADDITION -> "Addition Woods"
+                                MathTopic.SUBTRACTION -> "Subtraction Savannah"
+                                MathTopic.MULTIPLICATION -> "Multiplication Canopy"
+                            }
+                            val countInZone = animals.count { it.zone == topic && it.isUnlocked }
+
+                            FilterChip(
+                                selected = selectedZoneFilter == topic,
+                                onClick = { selectedZoneFilter = topic },
+                                label = { Text("${topic.animalEmoji} $zoneName ($countInZone/4)") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(topic.colorHex),
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
                     }
                 }
-            }
 
-            // Encyclopedia Animal Cards List
-            items(filteredAnimals) { animal ->
-                EncyclopediaAnimalCard(
-                    animal = animal,
-                    onCardClick = {
-                        if (animal.isUnlocked) {
-                            selectedAnimalForDetail = animal
-                        }
-                    },
-                    onSpeakFact = { onSpeakAnimalFact(animal) },
-                    onNavigateToZone = { onNavigateToZone(animal.zone) }
-                )
-            }
+                // Encyclopedia Animal Cards List
+                items(filteredAnimals) { animal ->
+                    EncyclopediaAnimalCard(
+                        animal = animal,
+                        onCardClick = {
+                            if (animal.isUnlocked) {
+                                selectedAnimalForDetail = animal
+                            }
+                        },
+                        onSpeakFact = { onSpeakAnimalFact(animal) },
+                        onNavigateToZone = { onNavigateToZone(animal.zone) }
+                    )
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }

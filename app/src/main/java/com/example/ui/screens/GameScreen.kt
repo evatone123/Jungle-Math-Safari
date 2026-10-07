@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,316 +83,452 @@ fun GameScreen(
     val topic = session.topic
     val topicColor = Color(topic.colorHex)
 
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
     ) {
-        // Game Header: Quit button, Question X of 5, Score counter & Music toggle
-        Row(
+        val isWideScreen = maxWidth >= 700.dp
+
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            IconButton(
-                onClick = onQuit,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .testTag("game_quit_button")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Quit Game",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (session.isDailyChallenge) "Daily Challenge" else "${topic.title} • Lvl ${session.levelNumber}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = topicColor
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(session.difficulty.colorHex).copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            text = "${session.difficulty.emoji} ${session.difficulty.title}",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(session.difficulty.colorHex),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-                Text(
-                    text = "Question ${session.currentQuestionIndex + 1} of ${session.questions.size}",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onMusicToggle,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(if (isMusicOn) BananaYellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface)
-                        .testTag("game_toggle_music_button")
-                ) {
-                    Text(
-                        text = if (isMusicOn) "🎵" else "🔇",
-                        fontSize = 16.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = BananaYellow.copy(alpha = 0.3f)
-                ) {
-                    Text(
-                        text = "🪙 ${session.score}",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 13.sp,
-                        color = Color(0xFF6D4C41),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                    )
-                }
-            }
-        }
-
-        // Progress bar
-        LinearProgressIndicator(
-            progress = {
-                if (session.questions.isNotEmpty()) {
-                    (session.currentQuestionIndex + 1).toFloat() / session.questions.size
-                } else 0f
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = topicColor,
-            trackColor = Color.LightGray.copy(alpha = 0.4f)
-        )
-
-        if (currentQ != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Reaction state for the animated companion character
-            val reactionState = when {
-                session.isAnswerChecked && session.isAnswerCorrect == true -> AnimalReactionState.CORRECT_CELEBRATION
-                session.isAnswerChecked && session.isAnswerCorrect == false -> AnimalReactionState.ENCOURAGING_RETRY
-                else -> AnimalReactionState.IDLE
-            }
-
-            // Animated Animal Character reacting with positive encouraging feedback
-            AnimatedAnimalCharacter(
-                reactionState = reactionState,
-                topic = topic,
+            // Game Header: Quit button, Question X of 5, Score counter & Music toggle
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Main Question Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                    .widthIn(max = 1100.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Companion Speech Bubble
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                    IconButton(
+                        onClick = onQuit,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .testTag("game_quit_button")
                     ) {
-                        Text(text = topic.animalEmoji, fontSize = 36.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = currentQ.promptText,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = 22.sp
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Quit Game",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (session.isDailyChallenge) "Daily Challenge" else "${topic.title} • Lvl ${session.levelNumber}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = topicColor
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(session.difficulty.colorHex).copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "${session.difficulty.emoji} ${session.difficulty.title}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(session.difficulty.colorHex),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Question ${session.currentQuestionIndex + 1} of ${session.questions.size}",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
 
-                    // Visual Representation Area
-                    VisualProblemArea(question = currentQ)
-
-                    // Math Formula Display (e.g. "3 + 2 = ?")
-                    if (currentQ.formulaText.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = topicColor.copy(alpha = 0.12f)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = onMusicToggle,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (isMusicOn) BananaYellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface)
+                                .testTag("game_toggle_music_button")
                         ) {
                             Text(
-                                text = currentQ.formulaText,
-                                fontSize = 24.sp,
+                                text = if (isMusicOn) "🎵" else "🔇",
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = BananaYellow.copy(alpha = 0.3f)
+                        ) {
+                            Text(
+                                text = "🪙 ${session.score}",
                                 fontWeight = FontWeight.Black,
-                                color = topicColor,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                                fontSize = 13.sp,
+                                color = Color(0xFF6D4C41),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                             )
                         }
                     }
                 }
+            }
+
+            // Progress bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 1100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(
+                    progress = {
+                        if (session.questions.isNotEmpty()) {
+                            (session.currentQuestionIndex + 1).toFloat() / session.questions.size
+                        } else 0f
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = topicColor,
+                    trackColor = Color.LightGray.copy(alpha = 0.4f)
+                )
+            }
+
+            if (currentQ != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Reaction state for the animated companion character
+                val reactionState = when {
+                    session.isAnswerChecked && session.isAnswerCorrect == true -> AnimalReactionState.CORRECT_CELEBRATION
+                    session.isAnswerChecked && session.isAnswerCorrect == false -> AnimalReactionState.ENCOURAGING_RETRY
+                    else -> AnimalReactionState.IDLE
+                }
+
+                if (isWideScreen) {
+                    // Wide / Tablet / Landscape: Side-by-side Question & Answer Panes
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 1150.dp)
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        // Left Pane: Companion Character & Question Prompt & Visuals
+                        Column(
+                            modifier = Modifier.weight(1.05f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            AnimatedAnimalCharacter(
+                                reactionState = reactionState,
+                                topic = topic,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            QuestionPromptCard(
+                                question = currentQ,
+                                topic = topic,
+                                topicColor = topicColor
+                            )
+                        }
+
+                        // Right Pane: Input Controls, Tutor Hint, Feedback & Next Button
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (currentQ.questionType == QuestionType.FEED_ANIMAL) {
+                                FeedAnimalInteractiveMode(
+                                    targetCount = currentQ.correctAnswer,
+                                    currentCount = session.interactiveCount,
+                                    itemEmoji = currentQ.itemEmoji,
+                                    animalEmoji = topic.animalEmoji,
+                                    isAnswerChecked = session.isAnswerChecked,
+                                    onIncrement = onIncrementInteractive,
+                                    onDecrement = onDecrementInteractive,
+                                    onSubmit = onSubmitInteractive
+                                )
+                            } else {
+                                MultipleChoiceOptions(
+                                    options = currentQ.options,
+                                    correctAnswer = currentQ.correctAnswer,
+                                    selectedOption = session.selectedOption,
+                                    isAnswerChecked = session.isAnswerChecked,
+                                    onSelect = onSelectOption
+                                )
+                            }
+
+                            TutorHelpButton(
+                                isEnabled = !session.isAnswerChecked,
+                                onClick = onTutorHelp
+                            )
+
+                            AnswerFeedbackCard(
+                                session = session,
+                                topic = topic,
+                                currentQ = currentQ,
+                                onNextQuestion = onNextQuestion
+                            )
+                        }
+                    }
+                } else {
+                    // Phone Portrait: Single Column Streamlined
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 560.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        AnimatedAnimalCharacter(
+                            reactionState = reactionState,
+                            topic = topic,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        QuestionPromptCard(
+                            question = currentQ,
+                            topic = topic,
+                            topicColor = topicColor
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (currentQ.questionType == QuestionType.FEED_ANIMAL) {
+                            FeedAnimalInteractiveMode(
+                                targetCount = currentQ.correctAnswer,
+                                currentCount = session.interactiveCount,
+                                itemEmoji = currentQ.itemEmoji,
+                                animalEmoji = topic.animalEmoji,
+                                isAnswerChecked = session.isAnswerChecked,
+                                onIncrement = onIncrementInteractive,
+                                onDecrement = onDecrementInteractive,
+                                onSubmit = onSubmitInteractive
+                            )
+                        } else {
+                            MultipleChoiceOptions(
+                                options = currentQ.options,
+                                correctAnswer = currentQ.correctAnswer,
+                                selectedOption = session.selectedOption,
+                                isAnswerChecked = session.isAnswerChecked,
+                                onSelect = onSelectOption
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TutorHelpButton(
+                            isEnabled = !session.isAnswerChecked,
+                            onClick = onTutorHelp
+                        )
+
+                        AnswerFeedbackCard(
+                            session = session,
+                            topic = topic,
+                            currentQ = currentQ,
+                            onNextQuestion = onNextQuestion
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+        }
+    }
+}
+
+@Composable
+private fun QuestionPromptCard(
+    question: Question,
+    topic: MathTopic,
+    topicColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Companion Speech Bubble
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = topic.animalEmoji, fontSize = 36.sp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = question.promptText,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 22.sp
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Interactive Input or Multiple Choice Options
-            if (currentQ.questionType == QuestionType.FEED_ANIMAL) {
-                // Interactive Basket Mode
-                FeedAnimalInteractiveMode(
-                    targetCount = currentQ.correctAnswer,
-                    currentCount = session.interactiveCount,
-                    itemEmoji = currentQ.itemEmoji,
-                    animalEmoji = topic.animalEmoji,
-                    isAnswerChecked = session.isAnswerChecked,
-                    onIncrement = onIncrementInteractive,
-                    onDecrement = onDecrementInteractive,
-                    onSubmit = onSubmitInteractive
-                )
-            } else {
-                // Multiple Choice Grid
-                MultipleChoiceOptions(
-                    options = currentQ.options,
-                    correctAnswer = currentQ.correctAnswer,
-                    selectedOption = session.selectedOption,
-                    isAnswerChecked = session.isAnswerChecked,
-                    onSelect = onSelectOption
-                )
-            }
+            // Visual Representation Area
+            VisualProblemArea(question = question)
 
-            // AI Safari Tutor Button ("I need help")
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
+            // Math Formula Display (e.g. "3 + 2 = ?")
+            if (question.formulaText.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = SafariGold.copy(alpha = 0.15f),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable(enabled = !session.isAnswerChecked) { onTutorHelp() }
-                        .testTag("tutor_help_button")
+                    shape = RoundedCornerShape(14.dp),
+                    color = topicColor.copy(alpha = 0.12f)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "🦉", fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Ask Safari Tutor for a Hint",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color(0xFFE65100)
-                        )
-                    }
-                }
-            }
-
-            // Answer Result Banner & Next Button
-            AnimatedVisibility(
-                visible = session.isAnswerChecked,
-                enter = fadeIn() + slideInVertically()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    val isCorrect = session.isAnswerCorrect == true
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("answer_feedback_card"),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isCorrect) EncouragementGreen.copy(alpha = 0.15f) else GentleRetryOrange.copy(alpha = 0.15f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = if (isCorrect) topic.animalEmoji else "💡",
-                                fontSize = 32.sp
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = if (isCorrect) "Fantastic! +100 Points 🎉" else "Almost! Correct was ${currentQ.correctAnswer}",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 16.sp,
-                                    color = if (isCorrect) EncouragementGreen else GentleRetryOrange
-                                )
-                                Text(
-                                    text = if (isCorrect) "${topic.animalEmoji} says: Super math explorer!" else "Keep practicing, explorer!",
-                                    fontSize = 13.sp,
-                                    color = Color.DarkGray
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = onNextQuestion,
-                        colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .testTag("next_question_button")
-                    ) {
-                        Text(
-                            text = if (session.currentQuestionIndex + 1 < session.questions.size) "Next Question ➜" else "Finish Adventure! 🏆",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = question.formulaText,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        color = topicColor,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
                 }
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(24.dp))
+@Composable
+private fun TutorHelpButton(
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = SafariGold.copy(alpha = 0.15f),
+            modifier = Modifier
+                .clip(RoundedCornerShape(20.dp))
+                .clickable(enabled = isEnabled) { onClick() }
+                .testTag("tutor_help_button")
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "🦉", fontSize = 20.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Ask Safari Tutor for a Hint",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFFE65100)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnswerFeedbackCard(
+    session: GameSessionState,
+    topic: MathTopic,
+    currentQ: Question,
+    onNextQuestion: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = session.isAnswerChecked,
+        enter = fadeIn() + slideInVertically(),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            val isCorrect = session.isAnswerCorrect == true
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("answer_feedback_card"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isCorrect) EncouragementGreen.copy(alpha = 0.15f) else GentleRetryOrange.copy(alpha = 0.15f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isCorrect) topic.animalEmoji else "💡",
+                        fontSize = 32.sp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = if (isCorrect) "Fantastic! +100 Points 🎉" else "Almost! Correct was ${currentQ.correctAnswer}",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 16.sp,
+                            color = if (isCorrect) EncouragementGreen else GentleRetryOrange
+                        )
+                        Text(
+                            text = if (isCorrect) "${topic.animalEmoji} says: Super math explorer!" else "Keep practicing, explorer!",
+                            fontSize = 13.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onNextQuestion,
+                colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .testTag("next_question_button")
+            ) {
+                Text(
+                    text = if (session.currentQuestionIndex + 1 < session.questions.size) "Next Question ➜" else "Finish Adventure! 🏆",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

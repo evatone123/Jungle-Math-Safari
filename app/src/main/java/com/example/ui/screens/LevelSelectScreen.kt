@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -68,7 +69,8 @@ fun LevelSelectScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SafariTopBar(
             title = topic.title,
@@ -78,82 +80,89 @@ fun LevelSelectScreen(
             isMusicOn = isMusicOn
         )
 
-        // Mascot Guidance Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = topicColor.copy(alpha = 0.12f))
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = topic.animalEmoji, fontSize = 28.sp)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "${topic.animalName} says:",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = topicColor
-                    )
-                    Text(
-                        text = "\"${topic.description}\"",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
-
-        // Difficulty Selector Component (Easy, Medium, Hard)
-        DifficultySelectorCard(
-            selectedDifficulty = selectedDifficulty,
-            onSelectDifficulty = { selectedDifficulty = it },
-            topicColor = topicColor
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Grid of 10 levels
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .widthIn(max = 1000.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items((1..10).toList()) { levelNum ->
-                val levelRecord = levelsMap[levelNum]
-                val isUnlocked = levelRecord?.isUnlocked ?: (levelNum == 1)
-                val stars = levelRecord?.starsEarned ?: 0
-
-                LevelGridItem(
-                    levelNumber = levelNum,
-                    isUnlocked = isUnlocked,
-                    stars = stars,
-                    topicColor = topicColor,
-                    difficulty = selectedDifficulty,
-                    onClick = {
-                        if (isUnlocked) {
-                            onSelectLevel(levelNum, selectedDifficulty)
-                        }
+            // Mascot Guidance Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = topicColor.copy(alpha = 0.12f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = topic.animalEmoji, fontSize = 28.sp)
                     }
-                )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "${topic.animalName} says:",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = topicColor
+                        )
+                        Text(
+                            text = "\"${topic.description}\"",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            // Difficulty Selector Component (Easy, Medium, Hard)
+            DifficultySelectorCard(
+                selectedDifficulty = selectedDifficulty,
+                onSelectDifficulty = { selectedDifficulty = it },
+                topicColor = topicColor
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Responsive Adaptive Grid of 10 levels
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 145.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items((1..10).toList()) { levelNum ->
+                    val levelRecord = levelsMap[levelNum]
+                    val isUnlocked = levelRecord?.isUnlocked ?: (levelNum == 1)
+                    val stars = levelRecord?.starsEarned ?: 0
+
+                    LevelGridItem(
+                        levelNumber = levelNum,
+                        isUnlocked = isUnlocked,
+                        stars = stars,
+                        topicColor = topicColor,
+                        difficulty = selectedDifficulty,
+                        onClick = {
+                            if (isUnlocked) {
+                                onSelectLevel(levelNum, selectedDifficulty)
+                            }
+                        }
+                    )
+                }
             }
         }
     }

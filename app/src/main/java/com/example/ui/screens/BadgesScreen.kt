@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -59,7 +60,8 @@ fun BadgesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SafariTopBar(
             title = "Safari Badges 🏅",
@@ -69,16 +71,22 @@ fun BadgesScreen(
             isMusicOn = isMusicOn
         )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .widthIn(max = 1000.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (onNavigateToStickers != null) {
-                item(span = { GridItemSpan(2) }) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 155.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                if (onNavigateToStickers != null) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -134,6 +142,7 @@ fun BadgesScreen(
             }
         }
     }
+}
 }
 
 @Composable

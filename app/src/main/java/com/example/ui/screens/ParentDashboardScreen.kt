@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -89,430 +91,156 @@ fun ParentDashboardScreen(
     val totalAttempted = stats.totalAnswered
     val overallAccuracy = if (totalAttempted > 0) (stats.totalCorrect.toFloat() / totalAttempted * 100).toInt() else 0
 
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
     ) {
-        SafariTopBar(
-            title = "Parent & Educator Zone 👨‍👩‍👧",
-            subtitle = "Learning analytics and settings",
-            onBackClick = onBackClick,
-            onMusicToggle = {
-                val newMusic = !musicOn
-                musicOn = newMusic
-                onUpdateSettings(soundOn, voiceOn, newMusic, cloudSync)
-            },
-            isMusicOn = musicOn
-        )
+        val isWideScreen = maxWidth >= 740.dp
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Overview Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(2.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 1150.dp)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Learning Progress",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Overall accuracy: $overallAccuracy%",
-                                fontSize = 13.sp,
-                                color = EncouragementGreen,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = JunglePrimary.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = "$totalAttempted Questions",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = JunglePrimary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val chartItems = remember(stats) {
-                        listOf(
-                            CategoryProgressItem(
-                                topic = MathTopic.COUNTING,
-                                title = "Counting",
-                                emoji = "🍌",
-                                animalEmoji = "🐒",
-                                animalName = "Kiki",
-                                solvedCount = stats.countingCorrect,
-                                totalCount = stats.countingTotal,
-                                color = Color(0xFFFFA000)
-                            ),
-                            CategoryProgressItem(
-                                topic = MathTopic.ADDITION,
-                                title = "Addition",
-                                emoji = "🍎",
-                                animalEmoji = "🦁",
-                                animalName = "Leo",
-                                solvedCount = stats.additionCorrect,
-                                totalCount = stats.additionTotal,
-                                color = Color(0xFFE65100)
-                            ),
-                            CategoryProgressItem(
-                                topic = MathTopic.SUBTRACTION,
-                                title = "Subtraction",
-                                emoji = "🥥",
-                                animalEmoji = "🐘",
-                                animalName = "Tembo",
-                                solvedCount = stats.subtractionCorrect,
-                                totalCount = stats.subtractionTotal,
-                                color = Color(0xFF1976D2)
-                            ),
-                            CategoryProgressItem(
-                                topic = MathTopic.MULTIPLICATION,
-                                title = "Multiplication",
-                                emoji = "🌿",
-                                animalEmoji = "🦒",
-                                animalName = "Twiga",
-                                solvedCount = stats.multiplicationCorrect,
-                                totalCount = stats.multiplicationTotal,
-                                color = Color(0xFF2E7D32)
-                            )
-                        )
-                    }
-
-                    // Visual Compose Graphics Chart
-                    CategoryComparativeBarChart(items = chartItems)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = onNavigateToProgress,
-                        colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("open_progress_analytics_button")
-                    ) {
-                        Text(
-                            text = "Open Full Visual Analytics & Donut Charts 📊 ➜",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Subject Accuracy Breakdown Bars
-                    SkillAccuracyBar(label = "🍌 Counting (Grove)", correct = stats.countingCorrect, total = stats.countingTotal, color = Color(0xFFF9A825))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SkillAccuracyBar(label = "🦁 Addition (Valley)", correct = stats.additionCorrect, total = stats.additionTotal, color = Color(0xFFE65100))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SkillAccuracyBar(label = "🐘 Subtraction (Plains)", correct = stats.subtractionCorrect, total = stats.subtractionTotal, color = Color(0xFF1565C0))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SkillAccuracyBar(label = "🦒 Multiplication (Hills)", correct = stats.multiplicationCorrect, total = stats.multiplicationTotal, color = Color(0xFF2E7D32))
-                }
+                SafariTopBar(
+                    title = "Parent & Educator Zone 👨‍👩‍👧",
+                    subtitle = "Learning analytics and settings",
+                    onBackClick = onBackClick,
+                    onMusicToggle = {
+                        val newMusic = !musicOn
+                        musicOn = newMusic
+                        onUpdateSettings(soundOn, voiceOn, newMusic, cloudSync)
+                    },
+                    isMusicOn = musicOn
+                )
             }
 
-            // Pedagogical Recommendation Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = SafariGold.copy(alpha = 0.15f))
-            ) {
+            if (isWideScreen) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .widthIn(max = 1150.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(SafariGold.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
+                    // Left Column: Learning Progress & Analytics
+                    Column(
+                        modifier = Modifier.weight(1.1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Info, contentDescription = "Tutor Recommendation", tint = Color(0xFFE65100))
+                        LearningProgressOverviewCard(
+                            stats = stats,
+                            totalAttempted = totalAttempted,
+                            overallAccuracy = overallAccuracy,
+                            onNavigateToProgress = onNavigateToProgress
+                        )
+                        LearningRecommendationCard(stats = stats)
+                        ResetDataButton(onClick = { showResetDialog = true })
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Learning Recommendation",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color(0xFFE65100)
+
+                    // Right Column: Child Profile & Audio/Sensory Controls
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        ChildProfileCard(
+                            nickname = nicknameInput,
+                            onNicknameChange = {
+                                nicknameInput = it
+                                onUpdateProfile(it, ageGroup, profile.avatarEmoji)
+                            }
                         )
-                        val rec = when {
-                            stats.countingTotal < 5 -> "Start by exploring Banana Grove to build early counting confidence."
-                            stats.subtractionTotal == 0 -> "Try Elephant Plains next! Tembo introduces sharing and taking away."
-                            stats.additionTotal == 0 -> "Ready for Lion Valley! Practice simple sums with Leo."
-                            else -> "Great math variety! Encourage daily 5-question quests to maintain mastery."
-                        }
-                        Text(
-                            text = rec,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = 18.sp
+                        AudioSettingsCard(
+                            soundOn = soundOn,
+                            voiceOn = voiceOn,
+                            musicOn = musicOn,
+                            musicVolume = musicVolume,
+                            currentAudioTheme = currentAudioTheme,
+                            cloudSync = cloudSync,
+                            onSoundToggle = {
+                                soundOn = it
+                                onUpdateSettings(it, voiceOn, musicOn, cloudSync)
+                            },
+                            onMusicToggle = {
+                                musicOn = it
+                                onUpdateSettings(soundOn, voiceOn, it, cloudSync)
+                            },
+                            onVoiceToggle = {
+                                voiceOn = it
+                                onUpdateSettings(soundOn, it, musicOn, cloudSync)
+                            },
+                            onCloudSyncToggle = {
+                                cloudSync = it
+                                onUpdateSettings(soundOn, voiceOn, musicOn, it)
+                            },
+                            onSetMusicVolume = onSetMusicVolume,
+                            onSelectAudioTheme = onSelectAudioTheme
                         )
+                        ChildSafetyCard()
                     }
                 }
-            }
-
-            // Child Profile Edit
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Text(
-                        text = "Child Profile",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 600.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    LearningProgressOverviewCard(
+                        stats = stats,
+                        totalAttempted = totalAttempted,
+                        overallAccuracy = overallAccuracy,
+                        onNavigateToProgress = onNavigateToProgress
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = nicknameInput,
-                        onValueChange = {
+                    LearningRecommendationCard(stats = stats)
+                    ChildProfileCard(
+                        nickname = nicknameInput,
+                        onNicknameChange = {
                             nicknameInput = it
                             onUpdateProfile(it, ageGroup, profile.avatarEmoji)
-                        },
-                        label = { Text("Child's Explorer Name") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("parent_child_name_input")
+                        }
                     )
-                }
-            }
-
-            // Preferences / Switches
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Text(
-                        text = "Audio & Settings",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    SettingToggleRow(
-                        title = "Sound Effects",
-                        subtitle = "Playful game chimes and success tones",
-                        checked = soundOn,
-                        onCheckedChange = {
+                    AudioSettingsCard(
+                        soundOn = soundOn,
+                        voiceOn = voiceOn,
+                        musicOn = musicOn,
+                        musicVolume = musicVolume,
+                        currentAudioTheme = currentAudioTheme,
+                        cloudSync = cloudSync,
+                        onSoundToggle = {
                             soundOn = it
                             onUpdateSettings(it, voiceOn, musicOn, cloudSync)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    SettingToggleRow(
-                        title = "Ambient Jungle Music",
-                        subtitle = "Calming jungle nature sounds & light background music",
-                        checked = musicOn,
-                        onCheckedChange = {
+                        },
+                        onMusicToggle = {
                             musicOn = it
                             onUpdateSettings(soundOn, voiceOn, it, cloudSync)
-                        }
-                    )
-
-                    if (musicOn) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        // Volume Slider
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 4.dp, vertical = 4.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Music & Nature Volume",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "${(musicVolume * 100).toInt()}%",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = JunglePrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Slider(
-                                value = musicVolume,
-                                onValueChange = { onSetMusicVolume(it) },
-                                valueRange = 0.1f..1.0f,
-                                steps = 9,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = JunglePrimary,
-                                    activeTrackColor = JunglePrimary
-                                ),
-                                modifier = Modifier.testTag("music_volume_slider")
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        // Soundscape Selector
-                        Text(
-                            text = "Jungle Soundscape Style",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            JungleAudioTheme.entries.forEach { theme ->
-                                val isSelected = currentAudioTheme == theme
-                                Surface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (isSelected) JunglePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    border = if (isSelected) BorderStroke(1.5.dp, JunglePrimary) else null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .clickable { onSelectAudioTheme(theme) }
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(text = theme.emoji, fontSize = 24.sp)
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = theme.title,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 13.sp,
-                                                color = if (isSelected) JunglePrimary else MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = theme.description,
-                                                fontSize = 11.sp,
-                                                color = Color.Gray,
-                                                lineHeight = 14.sp
-                                            )
-                                        }
-                                        if (isSelected) {
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(text = "✓", color = JunglePrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    SettingToggleRow(
-                        title = "Voice Narration",
-                        subtitle = "Reads math questions aloud for young readers",
-                        checked = voiceOn,
-                        onCheckedChange = {
+                        },
+                        onVoiceToggle = {
                             voiceOn = it
                             onUpdateSettings(soundOn, it, musicOn, cloudSync)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    SettingToggleRow(
-                        title = "Cloud Sync & Backup",
-                        subtitle = "Keep badges and progress saved safely",
-                        checked = cloudSync,
-                        onCheckedChange = {
+                        },
+                        onCloudSyncToggle = {
                             cloudSync = it
                             onUpdateSettings(soundOn, voiceOn, musicOn, it)
-                        }
+                        },
+                        onSetMusicVolume = onSetMusicVolume,
+                        onSelectAudioTheme = onSelectAudioTheme
                     )
+                    ChildSafetyCard()
+                    ResetDataButton(onClick = { showResetDialog = true })
                 }
             }
 
-            // Child Safety & Privacy notice
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Security,
-                        contentDescription = "Safety",
-                        tint = JunglePrimary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Child Safe & Privacy First",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = JunglePrimary
-                        )
-                        Text(
-                            text = "No advertising, no in-app purchases, no external web links. AI tutoring is strictly age-appropriate and does not store personal data.",
-                            fontSize = 11.sp,
-                            color = Color.DarkGray,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-            }
-
-            // Reset Data Button
-            Button(
-                onClick = { showResetDialog = true },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("reset_progress_button")
-            ) {
-                Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Reset All Safari Progress")
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(28.dp))
         }
     }
 
@@ -538,6 +266,431 @@ fun ParentDashboardScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun LearningProgressOverviewCard(
+    stats: UserStatsEntity,
+    totalAttempted: Int,
+    overallAccuracy: Int,
+    onNavigateToProgress: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Learning Progress",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Overall accuracy: $overallAccuracy%",
+                        fontSize = 13.sp,
+                        color = EncouragementGreen,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = JunglePrimary.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "$totalAttempted Questions",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = JunglePrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val chartItems = remember(stats) {
+                listOf(
+                    CategoryProgressItem(
+                        topic = MathTopic.COUNTING,
+                        title = "Counting",
+                        emoji = "🍌",
+                        animalEmoji = "🐒",
+                        animalName = "Kiki",
+                        solvedCount = stats.countingCorrect,
+                        totalCount = stats.countingTotal,
+                        color = Color(0xFFFFA000)
+                    ),
+                    CategoryProgressItem(
+                        topic = MathTopic.ADDITION,
+                        title = "Addition",
+                        emoji = "🍎",
+                        animalEmoji = "🦁",
+                        animalName = "Leo",
+                        solvedCount = stats.additionCorrect,
+                        totalCount = stats.additionTotal,
+                        color = Color(0xFFE65100)
+                    ),
+                    CategoryProgressItem(
+                        topic = MathTopic.SUBTRACTION,
+                        title = "Subtraction",
+                        emoji = "🥥",
+                        animalEmoji = "🐘",
+                        animalName = "Tembo",
+                        solvedCount = stats.subtractionCorrect,
+                        totalCount = stats.subtractionTotal,
+                        color = Color(0xFF1976D2)
+                    ),
+                    CategoryProgressItem(
+                        topic = MathTopic.MULTIPLICATION,
+                        title = "Multiplication",
+                        emoji = "🌿",
+                        animalEmoji = "🦒",
+                        animalName = "Twiga",
+                        solvedCount = stats.multiplicationCorrect,
+                        totalCount = stats.multiplicationTotal,
+                        color = Color(0xFF2E7D32)
+                    )
+                )
+            }
+
+            // Visual Compose Graphics Chart
+            CategoryComparativeBarChart(items = chartItems)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onNavigateToProgress,
+                colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("open_progress_analytics_button")
+            ) {
+                Text(
+                    text = "Open Full Visual Analytics & Donut Charts 📊 ➜",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Subject Accuracy Breakdown Bars
+            SkillAccuracyBar(label = "🍌 Counting (Grove)", correct = stats.countingCorrect, total = stats.countingTotal, color = Color(0xFFF9A825))
+            Spacer(modifier = Modifier.height(8.dp))
+            SkillAccuracyBar(label = "🦁 Addition (Valley)", correct = stats.additionCorrect, total = stats.additionTotal, color = Color(0xFFE65100))
+            Spacer(modifier = Modifier.height(8.dp))
+            SkillAccuracyBar(label = "🐘 Subtraction (Plains)", correct = stats.subtractionCorrect, total = stats.subtractionTotal, color = Color(0xFF1565C0))
+            Spacer(modifier = Modifier.height(8.dp))
+            SkillAccuracyBar(label = "🦒 Multiplication (Hills)", correct = stats.multiplicationCorrect, total = stats.multiplicationTotal, color = Color(0xFF2E7D32))
+        }
+    }
+}
+
+@Composable
+private fun LearningRecommendationCard(
+    stats: UserStatsEntity,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = SafariGold.copy(alpha = 0.15f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(SafariGold.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = Icons.Default.Info, contentDescription = "Tutor Recommendation", tint = Color(0xFFE65100))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Learning Recommendation",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFFE65100)
+                )
+                val rec = when {
+                    stats.countingTotal < 5 -> "Start by exploring Banana Grove to build early counting confidence."
+                    stats.subtractionTotal == 0 -> "Try Elephant Plains next! Tembo introduces sharing and taking away."
+                    stats.additionTotal == 0 -> "Ready for Lion Valley! Practice simple sums with Leo."
+                    else -> "Great math variety! Encourage daily 5-question quests to maintain mastery."
+                }
+                Text(
+                    text = rec,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 18.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChildProfileCard(
+    nickname: String,
+    onNicknameChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = "Child Profile",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = nickname,
+                onValueChange = onNicknameChange,
+                label = { Text("Child's Explorer Name") },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("parent_child_name_input")
+            )
+        }
+    }
+}
+
+@Composable
+private fun AudioSettingsCard(
+    soundOn: Boolean,
+    voiceOn: Boolean,
+    musicOn: Boolean,
+    musicVolume: Float,
+    currentAudioTheme: JungleAudioTheme,
+    cloudSync: Boolean,
+    onSoundToggle: (Boolean) -> Unit,
+    onMusicToggle: (Boolean) -> Unit,
+    onVoiceToggle: (Boolean) -> Unit,
+    onCloudSyncToggle: (Boolean) -> Unit,
+    onSetMusicVolume: (Float) -> Unit,
+    onSelectAudioTheme: (JungleAudioTheme) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = "Audio & Settings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SettingToggleRow(
+                title = "Sound Effects",
+                subtitle = "Playful game chimes and success tones",
+                checked = soundOn,
+                onCheckedChange = onSoundToggle
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            SettingToggleRow(
+                title = "Ambient Jungle Music",
+                subtitle = "Calming jungle nature sounds & light background music",
+                checked = musicOn,
+                onCheckedChange = onMusicToggle
+            )
+
+            if (musicOn) {
+                Spacer(modifier = Modifier.height(8.dp))
+                // Volume Slider
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Music & Nature Volume",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "${(musicVolume * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = JunglePrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Slider(
+                        value = musicVolume,
+                        onValueChange = onSetMusicVolume,
+                        valueRange = 0.1f..1.0f,
+                        steps = 9,
+                        colors = SliderDefaults.colors(
+                            thumbColor = JunglePrimary,
+                            activeTrackColor = JunglePrimary
+                        ),
+                        modifier = Modifier.testTag("music_volume_slider")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Jungle Soundscape Style",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    JungleAudioTheme.entries.forEach { theme ->
+                        val isSelected = currentAudioTheme == theme
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) JunglePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            border = if (isSelected) BorderStroke(1.5.dp, JunglePrimary) else null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { onSelectAudioTheme(theme) }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = theme.emoji, fontSize = 24.sp)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = theme.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = if (isSelected) JunglePrimary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = theme.description,
+                                        fontSize = 11.sp,
+                                        color = Color.Gray,
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(text = "✓", color = JunglePrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SettingToggleRow(
+                title = "Voice Narration",
+                subtitle = "Reads math questions aloud for young readers",
+                checked = voiceOn,
+                onCheckedChange = onVoiceToggle
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            SettingToggleRow(
+                title = "Cloud Sync & Backup",
+                subtitle = "Keep badges and progress saved safely",
+                checked = cloudSync,
+                onCheckedChange = onCloudSyncToggle
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChildSafetyCard(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Security,
+                contentDescription = "Safety",
+                tint = JunglePrimary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Child Safe & Privacy First",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = JunglePrimary
+                )
+                Text(
+                    text = "No advertising, no in-app purchases, no external web links. AI tutoring is strictly age-appropriate and does not store personal data.",
+                    fontSize = 11.sp,
+                    color = Color.DarkGray,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResetDataButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("reset_progress_button")
+    ) {
+        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset")
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Reset All Safari Progress")
     }
 }
 

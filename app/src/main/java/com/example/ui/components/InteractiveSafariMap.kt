@@ -482,7 +482,7 @@ fun InteractiveSafariMap(
                                 Text(text = "🐾", fontSize = 14.sp)
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "Cheers",
+                                    text = "BC",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = JunglePrimary

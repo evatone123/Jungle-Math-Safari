@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -49,6 +50,8 @@ import com.example.ui.theme.BananaYellow
 import com.example.ui.theme.JunglePrimary
 import com.example.ui.theme.SafariGold
 import com.example.ui.theme.StarGold
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.runtime.getValue
@@ -99,7 +102,10 @@ fun SafariMapScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             SafariTopBar(
                 title = "Safari Map 🗺️",
                 subtitle = "Explore math zones & conquer milestones",
@@ -108,13 +114,20 @@ fun SafariMapScreen(
                 isMusicOn = isMusicOn
             )
 
-            // View Mode Switcher: Visual Trail Map vs Cards vs Companion Cheers
-            Row(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .fillMaxSize()
+                    .widthIn(max = 1000.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // View Mode Switcher: Visual Trail Map vs Cards vs BC
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                 FilterChip(
                     selected = viewMode == SafariMapViewMode.VISUAL_TRAIL_MAP,
                     onClick = { viewMode = SafariMapViewMode.VISUAL_TRAIL_MAP },
@@ -143,7 +156,7 @@ fun SafariMapScreen(
                         val lvl = completed?.levelNumber ?: 1
                         onTriggerEncouragementPreview(topic, lvl)
                     },
-                    label = { Text("🎉 Buddy Cheers") },
+                    label = { Text("BC") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = SafariGold,
                         selectedLabelColor = Color.White
@@ -312,6 +325,7 @@ fun SafariMapScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
     }
     }
 

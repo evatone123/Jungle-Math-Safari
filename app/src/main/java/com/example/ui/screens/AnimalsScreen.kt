@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,7 +59,8 @@ fun AnimalsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SafariTopBar(
             title = "My Animal Companions 🐾",
@@ -67,22 +70,28 @@ fun AnimalsScreen(
             isMusicOn = isMusicOn
         )
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .widthIn(max = 1000.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items(animals) { animal ->
-                val isSelected = (animal.id == selectedCompanionId)
-                AnimalCard(
-                    animal = animal,
-                    isSelected = isSelected,
-                    onSelect = { onSelectAnimal(animal.id) }
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 310.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(animals) { animal ->
+                    val isSelected = (animal.id == selectedCompanionId)
+                    AnimalCard(
+                        animal = animal,
+                        isSelected = isSelected,
+                        onSelect = { onSelectAnimal(animal.id) }
+                    )
+                }
             }
         }
     }

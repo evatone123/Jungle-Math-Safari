@@ -219,7 +219,7 @@ fun LevelResultDialog(
                         .testTag("result_companion_cheers_button")
                 ) {
                     Text(
-                        text = "🐾 Buddy Cheers on Map! 🎉",
+                        text = "🐾 BC on Map! 🎉",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = Color.White
