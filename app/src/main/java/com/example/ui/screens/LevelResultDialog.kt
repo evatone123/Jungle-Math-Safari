@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -253,41 +254,83 @@ fun LevelResultDialog(
             }
         },
         confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Primary Action: Next Level
+                Button(
+                    onClick = onNextLevel,
+                    colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("result_next_level_button")
+                ) {
+                    Text(
+                        text = "Next Level ➜",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+
+                // Secondary Navigation Actions: Try Again & Safari Map in a clean dedicated row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onRetryLevel,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .testTag("result_retry_button")
+                    ) {
+                        Text(
+                            text = "Try Again 🔄",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onReturnMap,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .testTag("result_map_button")
+                    ) {
+                        Text(
+                            text = "Safari Map 🗺️",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+
+                // Award viewing buttons (if earned)
                 if (summary.newlyUnlockedBadges.isNotEmpty() && onViewBadges != null) {
                     Button(
                         onClick = onViewBadges,
-                        colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                        colors = ButtonDefaults.buttonColors(containerColor = EncouragementGreen),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 6.dp)
+                            .height(42.dp)
                             .testTag("result_view_badges_button")
                     ) {
                         Text(
                             text = "View Digital Animal Badges 🏅",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             color = Color.White
                         )
                     }
-                }
-
-                Button(
-                    onClick = onReturnMap,
-                    colors = ButtonDefaults.buttonColors(containerColor = SafariGold),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp)
-                        .testTag("result_companion_cheers_button")
-                ) {
-                    Text(
-                        text = "🐾 BC on Map! 🎉",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
                 }
 
                 if (summary.newlyUnlockedStickers.isNotEmpty() && onViewStickers != null) {
@@ -297,56 +340,19 @@ fun LevelResultDialog(
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 6.dp)
+                            .height(42.dp)
                             .testTag("result_view_stickers_button")
                     ) {
                         Text(
                             text = "View in Sticker Album 🐾",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
+                            fontSize = 13.sp,
                             color = Color.White
                         )
                     }
                 }
-
-                Button(
-                    onClick = onNextLevel,
-                    colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("result_next_level_button")
-                ) {
-                    Text(
-                        text = "Next Level ➜",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
             }
         },
-        dismissButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    onClick = onRetryLevel,
-                    colors = ButtonDefaults.outlinedButtonColors(),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.testTag("result_retry_button")
-                ) {
-                    Text("Try Again 🔄")
-                }
-                Button(
-                    onClick = onReturnMap,
-                    colors = ButtonDefaults.outlinedButtonColors(),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.testTag("result_map_button")
-                ) {
-                    Text("Safari Map 🗺️")
-                }
-            }
-        }
+        dismissButton = null
     )
 }
