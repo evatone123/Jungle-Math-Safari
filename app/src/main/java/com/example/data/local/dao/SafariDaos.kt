@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.DailyRecordEntity
+import com.example.data.local.entities.DifficultyProgressEntity
 import com.example.data.local.entities.LevelProgressEntity
 import com.example.data.local.entities.UnlockedAnimalEntity
 import com.example.data.local.entities.UnlockedBadgeEntity
@@ -61,6 +62,9 @@ interface BadgeDao {
     @Query("SELECT * FROM unlocked_badges")
     fun getUnlockedBadges(): Flow<List<UnlockedBadgeEntity>>
 
+    @Query("SELECT * FROM unlocked_badges")
+    suspend fun getUnlockedBadgesSync(): List<UnlockedBadgeEntity>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun unlockBadge(badge: UnlockedBadgeEntity)
 }
@@ -102,4 +106,25 @@ interface StickerDao {
 
     @Query("DELETE FROM unlocked_stickers")
     suspend fun clearAllStickers()
+}
+
+@Dao
+interface DifficultyProgressDao {
+    @Query("SELECT * FROM difficulty_progress")
+    fun getAllProgress(): Flow<List<DifficultyProgressEntity>>
+
+    @Query("SELECT * FROM difficulty_progress")
+    suspend fun getAllProgressSync(): List<DifficultyProgressEntity>
+
+    @Query("SELECT * FROM difficulty_progress WHERE difficultyId = :id LIMIT 1")
+    suspend fun getProgress(id: String): DifficultyProgressEntity?
+
+    @Query("SELECT * FROM difficulty_progress WHERE difficultyId = :id LIMIT 1")
+    fun observeProgress(id: String): Flow<DifficultyProgressEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdate(progress: DifficultyProgressEntity)
+
+    @Query("DELETE FROM difficulty_progress")
+    suspend fun clearAll()
 }

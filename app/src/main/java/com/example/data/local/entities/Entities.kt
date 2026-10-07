@@ -44,7 +44,29 @@ data class UserStatsEntity(
     val subtractionCorrect: Int = 0,
     val subtractionTotal: Int = 0,
     val multiplicationCorrect: Int = 0,
-    val multiplicationTotal: Int = 0
+    val multiplicationTotal: Int = 0,
+    // Math difficulty tier progress counters
+    val easyLevelsCompleted: Int = 0,
+    val easyCorrect: Int = 0,
+    val easyTotal: Int = 0,
+    val mediumLevelsCompleted: Int = 0,
+    val mediumCorrect: Int = 0,
+    val mediumTotal: Int = 0,
+    val hardLevelsCompleted: Int = 0,
+    val hardCorrect: Int = 0,
+    val hardTotal: Int = 0
+)
+
+@Entity(tableName = "difficulty_progress")
+data class DifficultyProgressEntity(
+    @PrimaryKey val difficultyId: String, // "easy", "medium", "hard"
+    val levelsCompleted: Int = 0,
+    val problemsAttempted: Int = 0,
+    val problemsCorrect: Int = 0,
+    val perfectRuns: Int = 0,
+    val highestScore: Int = 0,
+    val starsEarned: Int = 0,
+    val lastPlayedTimestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "unlocked_badges")

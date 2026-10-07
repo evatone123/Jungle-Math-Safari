@@ -6,6 +6,7 @@ import com.example.audio.JungleAudioTheme
 import com.example.audio.SafariAudioEngine
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.DailyRecordEntity
+import com.example.data.local.entities.DifficultyProgressEntity
 import com.example.data.local.entities.LevelProgressEntity
 import com.example.data.local.entities.UserStatsEntity
 import com.example.data.model.AnimalCompanion
@@ -60,7 +61,9 @@ data class SafariUiState(
     val animals: List<AnimalCompanion> = emptyList(),
     val badges: List<SafariBadge> = emptyList(),
     val stickers: List<AnimalSticker> = emptyList(),
+    val difficultyProgress: List<DifficultyProgressEntity> = emptyList(),
     val newlyUnlockedSticker: AnimalSticker? = null,
+    val newlyUnlockedBadge: SafariBadge? = null,
     val lessonEncouragement: LessonEncouragementState? = null,
     val levels: List<LevelProgressEntity> = emptyList(),
     val todayRecord: DailyRecordEntity? = null,
@@ -82,6 +85,7 @@ class SafariViewModel(
     private val _parentGateQuestion = MutableStateFlow("12 + 7 = ?")
     private val _parentGateAnswer = MutableStateFlow(19)
     private val _newlyUnlockedSticker = MutableStateFlow<AnimalSticker?>(null)
+    private val _newlyUnlockedBadge = MutableStateFlow<SafariBadge?>(null)
     private val _lessonEncouragementState = MutableStateFlow<LessonEncouragementState?>(null)
     private val _currentAudioTheme = MutableStateFlow(JungleAudioTheme.SERENE_RIVER)
     private val _backgroundMusicVolume = MutableStateFlow(0.45f)
@@ -92,11 +96,13 @@ class SafariViewModel(
         repository.availableAnimals,
         repository.allBadges,
         repository.allStickers,
+        repository.difficultyProgress,
         repository.allLevels,
         repository.getTodayDailyRecord(),
         _gameSession,
         _selectedDifficulty,
         _newlyUnlockedSticker,
+        _newlyUnlockedBadge,
         _currentAudioTheme,
         _backgroundMusicVolume,
         _lessonEncouragementState
@@ -110,14 +116,17 @@ class SafariViewModel(
         @Suppress("UNCHECKED_CAST")
         val stickers = args[4] as List<AnimalSticker>
         @Suppress("UNCHECKED_CAST")
-        val levels = args[5] as List<LevelProgressEntity>
-        val todayRecord = args[6] as? DailyRecordEntity
-        val session = args[7] as GameSessionState
-        val difficulty = args[8] as DifficultyLevel
-        val newlyUnlocked = args[9] as? AnimalSticker
-        val audioTheme = args[10] as JungleAudioTheme
-        val musicVolume = args[11] as Float
-        val encouragement = args[12] as? LessonEncouragementState
+        val diffProgress = args[5] as List<DifficultyProgressEntity>
+        @Suppress("UNCHECKED_CAST")
+        val levels = args[6] as List<LevelProgressEntity>
+        val todayRecord = args[7] as? DailyRecordEntity
+        val session = args[8] as GameSessionState
+        val difficulty = args[9] as DifficultyLevel
+        val newlyUnlocked = args[10] as? AnimalSticker
+        val newlyBadge = args[11] as? SafariBadge
+        val audioTheme = args[12] as JungleAudioTheme
+        val musicVolume = args[13] as Float
+        val encouragement = args[14] as? LessonEncouragementState
 
         SafariUiState(
             profile = profile,
@@ -125,7 +134,9 @@ class SafariViewModel(
             animals = animals,
             badges = badges,
             stickers = stickers,
+            difficultyProgress = diffProgress,
             newlyUnlockedSticker = newlyUnlocked,
+            newlyUnlockedBadge = newlyBadge,
             lessonEncouragement = encouragement,
             levels = levels,
             todayRecord = todayRecord,
@@ -305,9 +316,15 @@ class SafariViewModel(
                     correctCount = correct,
                     totalCount = total,
                     isPerfect = (correct == total),
-                    newlyUnlockedStickers = dailyResult.newlyUnlockedStickers
+                    newlyUnlockedStickers = dailyResult.newlyUnlockedStickers,
+                    newlyUnlockedBadges = dailyResult.newlyUnlockedBadges
                 )
-                if (dailyResult.newlyUnlockedStickers.isNotEmpty()) {
+                if (dailyResult.newlyUnlockedBadges.isNotEmpty()) {
+                    val firstBadge = dailyResult.newlyUnlockedBadges.first()
+                    _newlyUnlockedBadge.value = firstBadge
+                    audioEngine.playCelebration()
+                    audioEngine.speak("Awesome job! You unlocked the ${firstBadge.title} animal badge!")
+                } else if (dailyResult.newlyUnlockedStickers.isNotEmpty()) {
                     _newlyUnlockedSticker.value = dailyResult.newlyUnlockedStickers.first()
                     audioEngine.playCelebration()
                     audioEngine.speak("Hooray! You unlocked the ${dailyResult.newlyUnlockedStickers.first().name} sticker!")
@@ -335,7 +352,12 @@ class SafariViewModel(
                     totalCount = total,
                     difficulty = session.difficulty
                 )
-                if (summary.newlyUnlockedStickers.isNotEmpty()) {
+                if (summary.newlyUnlockedBadges.isNotEmpty()) {
+                    val firstBadge = summary.newlyUnlockedBadges.first()
+                    _newlyUnlockedBadge.value = firstBadge
+                    audioEngine.playCelebration()
+                    audioEngine.speak("Awesome job! You earned the ${firstBadge.title} animal badge!")
+                } else if (summary.newlyUnlockedStickers.isNotEmpty()) {
                     _newlyUnlockedSticker.value = summary.newlyUnlockedStickers.first()
                     audioEngine.playCelebration()
                     audioEngine.speak("Hooray! You unlocked the ${summary.newlyUnlockedStickers.first().name} sticker!")
@@ -355,6 +377,10 @@ class SafariViewModel(
                 _gameSession.update { it.copy(isSessionComplete = true, summary = summary) }
             }
         }
+    }
+
+    fun dismissNewlyUnlockedBadge() {
+        _newlyUnlockedBadge.value = null
     }
 
     fun requestTutorHint() {

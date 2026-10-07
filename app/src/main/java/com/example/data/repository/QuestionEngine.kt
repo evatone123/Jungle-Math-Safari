@@ -107,7 +107,7 @@ object QuestionEngine {
             countA = targetCount,
             countB = 0,
             operatorSymbol = "",
-            formulaText = if (questionType == QuestionType.FEED_ANIMAL) "Feed: $targetCount" else "Count: $targetCount",
+            formulaText = "",
             correctAnswer = targetCount,
             options = options,
             progressiveHints = hints

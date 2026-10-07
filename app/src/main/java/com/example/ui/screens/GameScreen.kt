@@ -274,10 +274,12 @@ fun GameScreen(
                                 )
                             }
 
-                            TutorHelpButton(
-                                isEnabled = !session.isAnswerChecked,
-                                onClick = onTutorHelp
-                            )
+                            if (topic != MathTopic.COUNTING) {
+                                TutorHelpButton(
+                                    isEnabled = !session.isAnswerChecked,
+                                    onClick = onTutorHelp
+                                )
+                            }
 
                             AnswerFeedbackCard(
                                 session = session,
@@ -334,12 +336,14 @@ fun GameScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        if (topic != MathTopic.COUNTING) {
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        TutorHelpButton(
-                            isEnabled = !session.isAnswerChecked,
-                            onClick = onTutorHelp
-                        )
+                            TutorHelpButton(
+                                isEnabled = !session.isAnswerChecked,
+                                onClick = onTutorHelp
+                            )
+                        }
 
                         AnswerFeedbackCard(
                             session = session,
@@ -399,7 +403,7 @@ private fun QuestionPromptCard(
             VisualProblemArea(question = question)
 
             // Math Formula Display (e.g. "3 + 2 = ?")
-            if (question.formulaText.isNotBlank()) {
+            if (topic != MathTopic.COUNTING && question.formulaText.isNotBlank()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
                     shape = RoundedCornerShape(14.dp),

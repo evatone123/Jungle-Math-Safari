@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.local.AppDatabase
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.DailyRecordEntity
+import com.example.data.local.entities.DifficultyProgressEntity
 import com.example.data.local.entities.LevelProgressEntity
 import com.example.data.local.entities.UnlockedAnimalEntity
 import com.example.data.local.entities.UnlockedBadgeEntity
@@ -31,6 +32,7 @@ class SafariRepository(private val database: AppDatabase) {
     private val animalDao = database.animalDao()
     private val dailyRecordDao = database.dailyRecordDao()
     private val stickerDao = database.stickerDao()
+    private val difficultyProgressDao = database.difficultyProgressDao()
 
     val childProfile: Flow<ChildProfileEntity> = profileDao.getProfile().map {
         it ?: ChildProfileEntity()
@@ -39,6 +41,8 @@ class SafariRepository(private val database: AppDatabase) {
     val userStats: Flow<UserStatsEntity> = statsDao.getStats().map {
         it ?: UserStatsEntity()
     }
+
+    val difficultyProgress: Flow<List<DifficultyProgressEntity>> = difficultyProgressDao.getAllProgress()
 
     fun getLevelsForTopic(topic: MathTopic): Flow<List<LevelProgressEntity>> {
         return levelProgressDao.getLevelsForTopic(topic.id)
@@ -57,10 +61,18 @@ class SafariRepository(private val database: AppDatabase) {
         }
     }
 
-    val allBadges: Flow<List<SafariBadge>> = badgeDao.getUnlockedBadges().map { unlockedList ->
+    val allBadges: Flow<List<SafariBadge>> = combine(
+        badgeDao.getUnlockedBadges(),
+        statsDao.getStats()
+    ) { unlockedList, statsEntity ->
         val unlockedSet = unlockedList.map { it.badgeId }.toSet()
+        val stats = statsEntity ?: UserStatsEntity()
         ALL_BADGES.map { badge ->
-            badge.copy(isUnlocked = unlockedSet.contains(badge.id))
+            val progress = calculateBadgeProgress(badge, stats)
+            badge.copy(
+                isUnlocked = unlockedSet.contains(badge.id),
+                currentProgress = progress
+            )
         }
     }
 
@@ -162,7 +174,11 @@ class SafariRepository(private val database: AppDatabase) {
         val baseCoins = (correctCount * 20) + 50 + (if (isPerfect) 50 else 0)
         val coinsEarned = (baseCoins * difficulty.scoreMultiplier).toInt()
 
-        // Update User Stats
+        val isEasy = difficulty == DifficultyLevel.EASY
+        val isMedium = difficulty == DifficultyLevel.MEDIUM
+        val isHard = difficulty == DifficultyLevel.HARD
+
+        // Update User Stats with detailed difficulty counters
         val currentStats = statsDao.getStatsSync() ?: UserStatsEntity()
         val updatedStats = currentStats.copy(
             totalCoins = currentStats.totalCoins + coinsEarned,
@@ -176,12 +192,35 @@ class SafariRepository(private val database: AppDatabase) {
             subtractionCorrect = currentStats.subtractionCorrect + if (topic == MathTopic.SUBTRACTION) correctCount else 0,
             subtractionTotal = currentStats.subtractionTotal + if (topic == MathTopic.SUBTRACTION) totalCount else 0,
             multiplicationCorrect = currentStats.multiplicationCorrect + if (topic == MathTopic.MULTIPLICATION) correctCount else 0,
-            multiplicationTotal = currentStats.multiplicationTotal + if (topic == MathTopic.MULTIPLICATION) totalCount else 0
+            multiplicationTotal = currentStats.multiplicationTotal + if (topic == MathTopic.MULTIPLICATION) totalCount else 0,
+            easyLevelsCompleted = currentStats.easyLevelsCompleted + if (isEasy) 1 else 0,
+            easyCorrect = currentStats.easyCorrect + if (isEasy) correctCount else 0,
+            easyTotal = currentStats.easyTotal + if (isEasy) totalCount else 0,
+            mediumLevelsCompleted = currentStats.mediumLevelsCompleted + if (isMedium) 1 else 0,
+            mediumCorrect = currentStats.mediumCorrect + if (isMedium) correctCount else 0,
+            mediumTotal = currentStats.mediumTotal + if (isMedium) totalCount else 0,
+            hardLevelsCompleted = currentStats.hardLevelsCompleted + if (isHard) 1 else 0,
+            hardCorrect = currentStats.hardCorrect + if (isHard) correctCount else 0,
+            hardTotal = currentStats.hardTotal + if (isHard) totalCount else 0
         )
         statsDao.insertOrUpdateStats(updatedStats)
 
-        // Check & unlock badges
-        checkAndUnlockBadges(topic, isPerfect, updatedStats)
+        // Update DifficultyProgressEntity in Room database
+        val existingDiff = difficultyProgressDao.getProgress(difficulty.id) ?: DifficultyProgressEntity(difficultyId = difficulty.id)
+        difficultyProgressDao.insertOrUpdate(
+            existingDiff.copy(
+                levelsCompleted = existingDiff.levelsCompleted + 1,
+                problemsAttempted = existingDiff.problemsAttempted + totalCount,
+                problemsCorrect = existingDiff.problemsCorrect + correctCount,
+                perfectRuns = existingDiff.perfectRuns + if (isPerfect) 1 else 0,
+                highestScore = maxOf(existingDiff.highestScore, score),
+                starsEarned = existingDiff.starsEarned + stars,
+                lastPlayedTimestamp = System.currentTimeMillis()
+            )
+        )
+
+        // Check & unlock badges (including difficulty-specific digital animal badges)
+        val newBadges = checkAndUnlockBadges(topic, difficulty, isPerfect, updatedStats)
 
         // Check animal unlocks based on progress
         checkAnimalUnlocks(updatedStats)
@@ -199,13 +238,15 @@ class SafariRepository(private val database: AppDatabase) {
             correctCount = correctCount,
             totalCount = totalCount,
             isPerfect = isPerfect,
-            newlyUnlockedStickers = newStickers
+            newlyUnlockedStickers = newStickers,
+            newlyUnlockedBadges = newBadges
         )
     }
 
     data class DailyCompletionResult(
         val bonusCoins: Int,
-        val newlyUnlockedStickers: List<AnimalSticker>
+        val newlyUnlockedStickers: List<AnimalSticker>,
+        val newlyUnlockedBadges: List<SafariBadge> = emptyList()
     )
 
     suspend fun recordDailyChallengeCompletion(
@@ -225,18 +266,43 @@ class SafariRepository(private val database: AppDatabase) {
             )
         )
 
+        val isEasy = difficulty == DifficultyLevel.EASY
+        val isMedium = difficulty == DifficultyLevel.MEDIUM
+        val isHard = difficulty == DifficultyLevel.HARD
+
         val currentStats = statsDao.getStatsSync() ?: UserStatsEntity()
         val updatedStats = currentStats.copy(
             totalCoins = currentStats.totalCoins + bonusCoins,
             totalStars = currentStats.totalStars + stars,
             totalAnswered = currentStats.totalAnswered + 5,
-            totalCorrect = currentStats.totalCorrect + correctCount
+            totalCorrect = currentStats.totalCorrect + correctCount,
+            easyLevelsCompleted = currentStats.easyLevelsCompleted + if (isEasy) 1 else 0,
+            easyCorrect = currentStats.easyCorrect + if (isEasy) correctCount else 0,
+            easyTotal = currentStats.easyTotal + if (isEasy) 5 else 0,
+            mediumLevelsCompleted = currentStats.mediumLevelsCompleted + if (isMedium) 1 else 0,
+            mediumCorrect = currentStats.mediumCorrect + if (isMedium) correctCount else 0,
+            mediumTotal = currentStats.mediumTotal + if (isMedium) 5 else 0,
+            hardLevelsCompleted = currentStats.hardLevelsCompleted + if (isHard) 1 else 0,
+            hardCorrect = currentStats.hardCorrect + if (isHard) correctCount else 0,
+            hardTotal = currentStats.hardTotal + if (isHard) 5 else 0
         )
         statsDao.insertOrUpdateStats(updatedStats)
 
+        val existingDiff = difficultyProgressDao.getProgress(difficulty.id) ?: DifficultyProgressEntity(difficultyId = difficulty.id)
+        difficultyProgressDao.insertOrUpdate(
+            existingDiff.copy(
+                levelsCompleted = existingDiff.levelsCompleted + 1,
+                problemsAttempted = existingDiff.problemsAttempted + 5,
+                problemsCorrect = existingDiff.problemsCorrect + correctCount,
+                starsEarned = existingDiff.starsEarned + stars,
+                lastPlayedTimestamp = System.currentTimeMillis()
+            )
+        )
+
         badgeDao.unlockBadge(UnlockedBadgeEntity(badgeId = "daily_adventurer"))
+        val newBadges = checkAndUnlockBadges(MathTopic.COUNTING, difficulty, false, updatedStats)
         val newStickers = checkAndUnlockStickers(updatedStats)
-        return DailyCompletionResult(bonusCoins, newStickers)
+        return DailyCompletionResult(bonusCoins, newStickers, newBadges)
     }
 
     suspend fun resetAllProgress() {
@@ -264,22 +330,95 @@ class SafariRepository(private val database: AppDatabase) {
         levelProgressDao.insertLevels(initialLevels)
     }
 
-    private suspend fun checkAndUnlockBadges(topic: MathTopic, isPerfect: Boolean, stats: UserStatsEntity) {
-        badgeDao.unlockBadge(UnlockedBadgeEntity("first_safari"))
+    private suspend fun checkAndUnlockBadges(
+        topic: MathTopic,
+        difficulty: DifficultyLevel,
+        isPerfect: Boolean,
+        stats: UserStatsEntity
+    ): List<SafariBadge> {
+        val alreadyUnlocked = badgeDao.getUnlockedBadgesSync().map { it.badgeId }.toSet()
+        val candidateBadgeIds = mutableListOf<String>()
 
+        // Starter & Topic Badges
+        candidateBadgeIds.add("first_safari")
         when (topic) {
-            MathTopic.COUNTING -> badgeDao.unlockBadge(UnlockedBadgeEntity("counting_champ"))
-            MathTopic.ADDITION -> badgeDao.unlockBadge(UnlockedBadgeEntity("addition_star"))
-            MathTopic.SUBTRACTION -> badgeDao.unlockBadge(UnlockedBadgeEntity("subtraction_ace"))
-            MathTopic.MULTIPLICATION -> badgeDao.unlockBadge(UnlockedBadgeEntity("multiplication_master"))
+            MathTopic.COUNTING -> candidateBadgeIds.add("counting_champ")
+            MathTopic.ADDITION -> candidateBadgeIds.add("addition_star")
+            MathTopic.SUBTRACTION -> candidateBadgeIds.add("subtraction_ace")
+            MathTopic.MULTIPLICATION -> candidateBadgeIds.add("multiplication_master")
         }
 
         if (isPerfect) {
-            badgeDao.unlockBadge(UnlockedBadgeEntity("perfect_explorer"))
+            candidateBadgeIds.add("perfect_explorer")
         }
 
         if (stats.totalCoins >= 200) {
-            badgeDao.unlockBadge(UnlockedBadgeEntity("coin_collector"))
+            candidateBadgeIds.add("coin_collector")
+        }
+
+        // --- Easy Tier Digital Animal Badges ---
+        if (stats.easyLevelsCompleted >= 1) candidateBadgeIds.add("badge_easy_tortoise")
+        if (stats.easyCorrect >= 5) candidateBadgeIds.add("badge_easy_sloth")
+        if (stats.easyLevelsCompleted >= 3) candidateBadgeIds.add("badge_easy_koala")
+        if (stats.easyLevelsCompleted >= 5) candidateBadgeIds.add("badge_easy_panda")
+
+        // --- Medium Tier Digital Animal Badges ---
+        if (stats.mediumLevelsCompleted >= 1) candidateBadgeIds.add("badge_medium_fox")
+        if (stats.mediumCorrect >= 10) candidateBadgeIds.add("badge_medium_monkey")
+        if (stats.mediumLevelsCompleted >= 3) candidateBadgeIds.add("badge_medium_cheetah")
+        if (stats.mediumLevelsCompleted >= 5) candidateBadgeIds.add("badge_medium_rhino")
+
+        // --- Hard Tier Digital Animal Badges ---
+        if (stats.hardLevelsCompleted >= 1) candidateBadgeIds.add("badge_hard_eagle")
+        if (stats.hardCorrect >= 10) candidateBadgeIds.add("badge_hard_gorilla")
+        if (stats.hardLevelsCompleted >= 3) candidateBadgeIds.add("badge_hard_tiger")
+        if (stats.hardLevelsCompleted >= 5) candidateBadgeIds.add("badge_hard_lion")
+
+        // --- Multi-Difficulty Grandmaster Badge ---
+        if (stats.easyLevelsCompleted >= 1 && stats.mediumLevelsCompleted >= 1 && stats.hardLevelsCompleted >= 1) {
+            candidateBadgeIds.add("badge_all_difficulties")
+        }
+
+        val newlyUnlocked = mutableListOf<SafariBadge>()
+        for (id in candidateBadgeIds) {
+            if (!alreadyUnlocked.contains(id)) {
+                badgeDao.unlockBadge(UnlockedBadgeEntity(id))
+                val badgeDef = ALL_BADGES.find { it.id == id }
+                if (badgeDef != null) {
+                    newlyUnlocked.add(badgeDef.copy(isUnlocked = true))
+                }
+            }
+        }
+        return newlyUnlocked
+    }
+
+    private fun calculateBadgeProgress(badge: SafariBadge, stats: UserStatsEntity): Int {
+        return when (badge.id) {
+            "badge_easy_tortoise" -> stats.easyLevelsCompleted.coerceAtMost(1)
+            "badge_easy_sloth" -> stats.easyCorrect.coerceAtMost(5)
+            "badge_easy_koala" -> stats.easyLevelsCompleted.coerceAtMost(3)
+            "badge_easy_panda" -> stats.easyLevelsCompleted.coerceAtMost(5)
+
+            "badge_medium_fox" -> stats.mediumLevelsCompleted.coerceAtMost(1)
+            "badge_medium_monkey" -> stats.mediumCorrect.coerceAtMost(10)
+            "badge_medium_cheetah" -> stats.mediumLevelsCompleted.coerceAtMost(3)
+            "badge_medium_rhino" -> stats.mediumLevelsCompleted.coerceAtMost(5)
+
+            "badge_hard_eagle" -> stats.hardLevelsCompleted.coerceAtMost(1)
+            "badge_hard_gorilla" -> stats.hardCorrect.coerceAtMost(10)
+            "badge_hard_tiger" -> stats.hardLevelsCompleted.coerceAtMost(3)
+            "badge_hard_lion" -> stats.hardLevelsCompleted.coerceAtMost(5)
+
+            "badge_all_difficulties" -> {
+                var tiers = 0
+                if (stats.easyLevelsCompleted > 0) tiers++
+                if (stats.mediumLevelsCompleted > 0) tiers++
+                if (stats.hardLevelsCompleted > 0) tiers++
+                tiers
+            }
+            "coin_collector" -> stats.totalCoins.coerceAtMost(200)
+            "perfect_explorer" -> if (stats.totalStars >= 3) 1 else 0
+            else -> if (badge.isUnlocked) 1 else 0
         }
     }
 
@@ -476,61 +615,195 @@ class SafariRepository(private val database: AppDatabase) {
         )
 
         val ALL_BADGES = listOf(
+            // --- Easy Tier Digital Animal Badges ---
+            SafariBadge(
+                id = "badge_easy_tortoise",
+                title = "Tortoise Scout",
+                description = "Started steady and solved your first Easy math level!",
+                emoji = "🐢",
+                requirement = "Complete 1 Easy level",
+                difficultyTier = "easy",
+                targetGoal = 1
+            ),
+            SafariBadge(
+                id = "badge_easy_sloth",
+                title = "Gentle Sloth",
+                description = "Solved 5 Easy math problems with great patience and care!",
+                emoji = "🦥",
+                requirement = "Solve 5 Easy problems",
+                difficultyTier = "easy",
+                targetGoal = 5
+            ),
+            SafariBadge(
+                id = "badge_easy_koala",
+                title = "Koala Climber",
+                description = "Climbed high into eucalyptus trees by finishing 3 Easy math levels!",
+                emoji = "🐨",
+                requirement = "Complete 3 Easy levels",
+                difficultyTier = "easy",
+                targetGoal = 3
+            ),
+            SafariBadge(
+                id = "badge_easy_panda",
+                title = "Panda Scholar",
+                description = "Mastered foundational numbers with 5 Easy math victories!",
+                emoji = "🐼",
+                requirement = "Complete 5 Easy levels",
+                difficultyTier = "easy",
+                targetGoal = 5
+            ),
+
+            // --- Medium Tier Digital Animal Badges ---
+            SafariBadge(
+                id = "badge_medium_fox",
+                title = "Clever Fox",
+                description = "Outfoxed tricky math puzzles on your first Medium expedition!",
+                emoji = "🦊",
+                requirement = "Complete 1 Medium level",
+                difficultyTier = "medium",
+                targetGoal = 1
+            ),
+            SafariBadge(
+                id = "badge_medium_monkey",
+                title = "Acrobat Chimp",
+                description = "Swung gracefully through 10 Medium difficulty math challenges!",
+                emoji = "🐒",
+                requirement = "Solve 10 Medium problems",
+                difficultyTier = "medium",
+                targetGoal = 10
+            ),
+            SafariBadge(
+                id = "badge_medium_cheetah",
+                title = "Cheetah Sprinter",
+                description = "Showed lightning calculation speed across 3 Medium levels!",
+                emoji = "🐆",
+                requirement = "Complete 3 Medium levels",
+                difficultyTier = "medium",
+                targetGoal = 3
+            ),
+            SafariBadge(
+                id = "badge_medium_rhino",
+                title = "Savanna Guardian",
+                description = "Stood strong and unshakeable by conquering 5 Medium math levels!",
+                emoji = "🦏",
+                requirement = "Complete 5 Medium levels",
+                difficultyTier = "medium",
+                targetGoal = 5
+            ),
+
+            // --- Hard Tier Digital Animal Badges ---
+            SafariBadge(
+                id = "badge_hard_eagle",
+                title = "Skyward Eagle",
+                description = "Soared high above the canopy with your first Hard math triumph!",
+                emoji = "🦅",
+                requirement = "Complete 1 Hard level",
+                difficultyTier = "hard",
+                targetGoal = 1
+            ),
+            SafariBadge(
+                id = "badge_hard_gorilla",
+                title = "Silverback Titan",
+                description = "Harnessed immense focus to solve 10 tough Hard math problems!",
+                emoji = "🦍",
+                requirement = "Solve 10 Hard problems",
+                difficultyTier = "hard",
+                targetGoal = 10
+            ),
+            SafariBadge(
+                id = "badge_hard_tiger",
+                title = "Fierce Tiger",
+                description = "Pounced on multi-digit calculations across 3 Hard levels!",
+                emoji = "🐅",
+                requirement = "Complete 3 Hard levels",
+                difficultyTier = "hard",
+                targetGoal = 3
+            ),
+            SafariBadge(
+                id = "badge_hard_lion",
+                title = "Crown Lion King",
+                description = "Crowned supreme mathematical monarch after conquering 5 Hard levels!",
+                emoji = "🦁",
+                requirement = "Complete 5 Hard levels",
+                difficultyTier = "hard",
+                targetGoal = 5
+            ),
+
+            // --- Multi-Difficulty Grandmaster Badge ---
+            SafariBadge(
+                id = "badge_all_difficulties",
+                title = "Safari Grandmaster",
+                description = "Proved true mastery across Easy, Medium, and Hard tiers in the wild!",
+                emoji = "👑",
+                requirement = "Complete levels on Easy, Medium & Hard",
+                difficultyTier = "all",
+                targetGoal = 3
+            ),
+
+            // --- Topic & Milestone Badges ---
             SafariBadge(
                 id = "first_safari",
                 title = "First Safari",
                 description = "Began the magical math journey!",
                 emoji = "🦁",
-                requirement = "Start your adventure"
+                requirement = "Start your adventure",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "counting_champ",
                 title = "Counting Champ",
                 description = "Mastered counting in Banana Grove!",
                 emoji = "🍌",
-                requirement = "Complete a Counting level"
+                requirement = "Complete a Counting level",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "addition_star",
                 title = "Addition Star",
                 description = "Added numbers like a mighty lion!",
                 emoji = "🍎",
-                requirement = "Complete an Addition level"
+                requirement = "Complete an Addition level",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "subtraction_ace",
                 title = "Subtraction Ace",
                 description = "Shared coconuts with Tembo the Elephant!",
                 emoji = "🥥",
-                requirement = "Complete a Subtraction level"
+                requirement = "Complete a Subtraction level",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "multiplication_master",
                 title = "Multiplication Master",
                 description = "Reached the treetops with Twiga!",
                 emoji = "🌿",
-                requirement = "Complete a Multiplication level"
+                requirement = "Complete a Multiplication level",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "perfect_explorer",
                 title = "Perfect Explorer",
                 description = "Earned 3 gold stars on a level!",
                 emoji = "⭐",
-                requirement = "Get 100% on any level"
+                requirement = "Get 100% on any level",
+                targetGoal = 1
             ),
             SafariBadge(
                 id = "coin_collector",
                 title = "Coin Collector",
                 description = "Gathered 200+ shiny Safari Coins!",
                 emoji = "🪙",
-                requirement = "Reach 200 total coins"
+                requirement = "Reach 200 total coins",
+                targetGoal = 200
             ),
             SafariBadge(
                 id = "daily_adventurer",
                 title = "Daily Adventurer",
                 description = "Finished a 5-question Daily Safari!",
                 emoji = "🌟",
-                requirement = "Complete a Daily Challenge"
+                requirement = "Complete a Daily Challenge",
+                targetGoal = 1
             )
         )
     }

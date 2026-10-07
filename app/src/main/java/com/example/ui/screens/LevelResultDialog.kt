@@ -38,6 +38,7 @@ import com.example.data.model.GameLevelSummary
 import com.example.ui.theme.AdventureOrange
 import com.example.ui.theme.BananaYellow
 import com.example.ui.theme.CoinAmber
+import com.example.ui.theme.EncouragementGreen
 import com.example.ui.theme.JunglePrimary
 import com.example.ui.theme.SafariGold
 import com.example.ui.theme.StarGold
@@ -48,7 +49,8 @@ fun LevelResultDialog(
     onNextLevel: () -> Unit,
     onRetryLevel: () -> Unit,
     onReturnMap: () -> Unit,
-    onViewStickers: (() -> Unit)? = null
+    onViewStickers: (() -> Unit)? = null,
+    onViewBadges: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onReturnMap,
@@ -205,10 +207,72 @@ fun LevelResultDialog(
                         }
                     }
                 }
+                if (summary.newlyUnlockedBadges.isNotEmpty()) {
+                    val badge = summary.newlyUnlockedBadges.first()
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("result_unlocked_badge_card"),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = EncouragementGreen.copy(alpha = 0.2f)),
+                        border = CardDefaults.outlinedCardBorder().copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(EncouragementGreen)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = badge.emoji, fontSize = 34.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "NEW ANIMAL BADGE UNLOCKED! 🏅",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = JunglePrimary
+                                )
+                                Text(
+                                    text = "${badge.title} (${summary.difficulty.title} Tier)",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = badge.description,
+                                    fontSize = 11.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Column(modifier = Modifier.fillMaxWidth()) {
+                if (summary.newlyUnlockedBadges.isNotEmpty() && onViewBadges != null) {
+                    Button(
+                        onClick = onViewBadges,
+                        colors = ButtonDefaults.buttonColors(containerColor = JunglePrimary),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp)
+                            .testTag("result_view_badges_button")
+                    ) {
+                        Text(
+                            text = "View Digital Animal Badges 🏅",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+
                 Button(
                     onClick = onReturnMap,
                     colors = ButtonDefaults.buttonColors(containerColor = SafariGold),

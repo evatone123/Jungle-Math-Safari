@@ -149,7 +149,10 @@ data class SafariBadge(
     val description: String,
     val emoji: String,
     val isUnlocked: Boolean = false,
-    val requirement: String
+    val requirement: String,
+    val difficultyTier: String? = null, // "easy", "medium", "hard", "all", or null
+    val targetGoal: Int = 1,
+    val currentProgress: Int = 0
 )
 
 enum class StickerRarity(val label: String, val colorHex: Long, val badgeEmoji: String) {
@@ -182,5 +185,6 @@ data class GameLevelSummary(
     val correctCount: Int,
     val totalCount: Int,
     val isPerfect: Boolean,
-    val newlyUnlockedStickers: List<AnimalSticker> = emptyList()
+    val newlyUnlockedStickers: List<AnimalSticker> = emptyList(),
+    val newlyUnlockedBadges: List<SafariBadge> = emptyList()
 )

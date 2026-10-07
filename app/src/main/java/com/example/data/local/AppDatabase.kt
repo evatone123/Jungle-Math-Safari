@@ -9,11 +9,13 @@ import com.example.data.local.dao.AnimalDao
 import com.example.data.local.dao.BadgeDao
 import com.example.data.local.dao.ChildProfileDao
 import com.example.data.local.dao.DailyRecordDao
+import com.example.data.local.dao.DifficultyProgressDao
 import com.example.data.local.dao.LevelProgressDao
 import com.example.data.local.dao.StatsDao
 import com.example.data.local.dao.StickerDao
 import com.example.data.local.entities.ChildProfileEntity
 import com.example.data.local.entities.DailyRecordEntity
+import com.example.data.local.entities.DifficultyProgressEntity
 import com.example.data.local.entities.LevelProgressEntity
 import com.example.data.local.entities.UnlockedAnimalEntity
 import com.example.data.local.entities.UnlockedBadgeEntity
@@ -31,9 +33,10 @@ import kotlinx.coroutines.launch
         UnlockedBadgeEntity::class,
         UnlockedAnimalEntity::class,
         DailyRecordEntity::class,
-        UnlockedStickerEntity::class
+        UnlockedStickerEntity::class,
+        DifficultyProgressEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -45,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun animalDao(): AnimalDao
     abstract fun dailyRecordDao(): DailyRecordDao
     abstract fun stickerDao(): StickerDao
+    abstract fun difficultyProgressDao(): DifficultyProgressDao
 
     companion object {
         @Volatile
@@ -110,6 +114,17 @@ abstract class AppDatabase : RoomDatabase() {
             // Unlock First Safari badge
             database.badgeDao().unlockBadge(
                 UnlockedBadgeEntity(badgeId = "first_safari")
+            )
+
+            // Pre-seed difficulty progress tracking records
+            database.difficultyProgressDao().insertOrUpdate(
+                DifficultyProgressEntity(difficultyId = "easy")
+            )
+            database.difficultyProgressDao().insertOrUpdate(
+                DifficultyProgressEntity(difficultyId = "medium")
+            )
+            database.difficultyProgressDao().insertOrUpdate(
+                DifficultyProgressEntity(difficultyId = "hard")
             )
 
             // Pre-seed 10 levels for each of the 4 areas (Level 1 unlocked by default)

@@ -24,6 +24,7 @@ import com.example.data.model.JungleEncyclopediaData
 import com.example.data.model.MathTopic
 import com.example.ui.components.ParentGateDialog
 import com.example.ui.components.TutorBottomSheet
+import com.example.ui.screens.AnimalBadgeCelebrationDialog
 import com.example.ui.screens.AnimalsScreen
 import com.example.ui.screens.BadgesScreen
 import com.example.ui.screens.DailyChallengeScreen
@@ -234,6 +235,7 @@ fun SafariApp(viewModel: SafariViewModel) {
             composable("badges") {
                 BadgesScreen(
                     badges = uiState.badges,
+                    difficultyProgress = uiState.difficultyProgress,
                     onBackClick = { navController.popBackStack() },
                     onNavigateToStickers = { navController.navigate("stickers") },
                     isMusicOn = uiState.profile.musicEnabled,
@@ -379,6 +381,23 @@ fun SafariApp(viewModel: SafariViewModel) {
                 },
                 onViewStickers = {
                     navController.navigate("stickers")
+                },
+                onViewBadges = {
+                    navController.navigate("badges")
+                }
+            )
+        }
+
+        // Animal Badge Unlock Celebration Dialog
+        uiState.newlyUnlockedBadge?.let { badge ->
+            AnimalBadgeCelebrationDialog(
+                badge = badge,
+                onViewBadges = {
+                    viewModel.dismissNewlyUnlockedBadge()
+                    navController.navigate("badges")
+                },
+                onDismiss = {
+                    viewModel.dismissNewlyUnlockedBadge()
                 }
             )
         }
